@@ -22,6 +22,7 @@ class ModelViewerState extends State<ModelViewer> {
     unawaited(generateModelViewerHtml());
     final store = widget.modelStateStore;
     if (store == null) return;
+
     _subscriptions.addAll([
       store.state.listen((newState) => _editor.updateState(newState)),
       store.exportClicks.listen((_) => _editor.export()),

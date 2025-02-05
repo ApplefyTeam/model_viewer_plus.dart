@@ -16,319 +16,410 @@
 
 <script>
 
-/* --------------------- MULTI-LAYER STATE --------------------- */
-let layers = [];
-let backgroundColor = "#ffffff";
-let canvasTexture = null;
 
-/* --------------------- MODEL VIEWER INIT --------------------- */
-function tryInitialize() {
-	// If DOM not ready, wait; else call initializeModelViewer directly
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initializeModelViewer);
-	} else {
-		initializeModelViewer();
-	}
-}
+    /* --------------------- MULTI-LAYER STATE --------------------- */
+    let layers = [];
+    let backgroundColor = "#ffffff";
+    let canvasTexture = null;
 
-// Called once the DOM is ready or immediately if DOM already loaded
-function initializeModelViewer() {
-	console.log("Initializing Model Viewer");
-	canvasTexture = null;
+    /* --------------------- MODEL VIEWER INIT --------------------- */
+    function tryInitialize() {
+        // If DOM not ready, wait; else call initializeModelViewer directly
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeModelViewer);
+        } else {
+            initializeModelViewer();
+        }
+    }
 
-	onModelLoadStarted();
+    // Called once the DOM is ready or immediately if DOM already loaded
+    function initializeModelViewer() {
+        console.log("Initializing Model Viewer");
+        canvasTexture = null;
 
-	const modelViewer = getModelViewer();
-	if (!modelViewer) {
-		console.error("Model viewer element not found");
-		return;
-	}
+        onModelLoadStarted();
 
-	// Log device pixel ratio (from original code)
-	console.log("Device pixel ratio:", window.devicePixelRatio);
+        const modelViewer = getModelViewer();
+        if (!modelViewer) {
+            console.error("Model viewer element not found");
+            return;
+        }
 
-	// On model load, create the canvas texture
-	modelViewer.addEventListener("load", async () => {
-		console.log("Model viewer loaded");
-		canvasTexture = modelViewer.createCanvasTexture();
+        // Log device pixel ratio (from original code)
+        console.log("Device pixel ratio:", window.devicePixelRatio);
 
-		// Setup offscreen canvas for higher resolution, if needed
-		const offscreenCanvas = document.createElement('canvas');
-		adjustCanvasResolution(offscreenCanvas);
-		canvasTexture.source.element.offscreenCanvas = offscreenCanvas;
+        // On model load, create the canvas texture
+        modelViewer.addEventListener("load", async () => {
+            console.log("Model viewer loaded");
+            canvasTexture = modelViewer.createCanvasTexture();
 
-		adjustCanvasResolution(canvasTexture.source.element);
+            // Setup offscreen canvas for higher resolution, if needed
+            const offscreenCanvas = document.createElement('canvas');
+            adjustCanvasResolution(offscreenCanvas);
+            canvasTexture.source.element.offscreenCanvas = offscreenCanvas;
 
-		onModelLoaded();
-	});
+            adjustCanvasResolution(canvasTexture.source.element);
 
-	modelViewer.addEventListener("error", (error) => {
-		console.error("Model viewer error:", error);
-	});
-}
+            onModelLoaded();
+        });
 
-// Resets or returns existing canvas texture
-function getCanvasTexture() {
-	if (!canvasTexture) {
-		console.log("Creating new canvas texture");
-		const modelViewer = getModelViewer();
-		canvasTexture = modelViewer.createCanvasTexture();
-	}
-	return canvasTexture;
-}
+        modelViewer.addEventListener("error", (error) => {
+            console.error("Model viewer error:", error);
+        });
+    }
 
-// Adjust canvas resolution (from original code)
-function adjustCanvasResolution(canvas) {
-	const canvasSize = 1024;
-	canvas.width = canvasSize;
-	canvas.height = canvasSize;
-	const ctx = canvas.getContext("2d");
-	// Example upscaling factor:
-	ctx.scale(2, 2);
-	console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
-}
+    // Resets or returns existing canvas texture
+    function getCanvasTexture() {
+        if (!canvasTexture) {
+            console.log("Creating new canvas texture");
+            const modelViewer = getModelViewer();
+            canvasTexture = modelViewer.createCanvasTexture();
+        }
+        return canvasTexture;
+    }
 
-/* -------------- MULTI-LAYER ADD/REMOVE/UPDATE -------------- */
-function setBackgroundColor(color) {
-	backgroundColor = color;
-	renderLayers();
-}
+    // Adjust canvas resolution (from original code)
+    function adjustCanvasResolution(canvas) {
+        const canvasSize = 1024;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        const ctx = canvas.getContext("2d");
+        // Example upscaling factor:
+        ctx.scale(2, 2);
+        console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
+    }
 
-function addLayer(layer) {
-	layers.push(layer);
-	layers.sort((a, b) => a.order - b.order);
-	renderLayers();
-}
+    /* -------------- MULTI-LAYER ADD/REMOVE/UPDATE -------------- */
+    function addLayer(layer) {
+        layers.push(layer);
+        layers.sort((a, b) => a.order - b.order);
+        renderLayers();
+    }
 
-function removeLayer(layerId) {
-	layers = layers.filter(layer => layer.id !== layerId);
-	renderLayers();
-}
+    function removeLayer(layerId) {
+        layers = layers.filter(layer => layer.id !== layerId);
+        renderLayers();
+    }
 
-function updateLayer(layerId, newProperties) {
-	const layer = layers.find(layer => layer.id === layerId);
-	if (layer) {
-		Object.assign(layer, newProperties);
-		layers.sort((a, b) => a.order - b.order);
-		renderLayers();
-	}
-}
+    function updateLayer(layerId, newProperties) {
+        const layer = layers.find(layer => layer.id === layerId);
+        if (layer) {
+            Object.assign(layer, newProperties);
+            layers.sort((a, b) => a.order - b.order);
+            renderLayers();
+        }
+    }
 
-// Main rendering function for all layers
-function renderLayers() {
-	const canvas = getCanvasTexture().source.element;
-	const ctx = canvas.getContext('2d');
+    // Main rendering function for all layers
+    let renderCallCount = 0;
+    function renderLayers() {
+        renderCallCount++;
+        console.log("Rendering Layers (Call#: " + renderCallCount + "):", layers);  // Log all layers before rendering
+        console.log("Layer count = " + layers.length);
 
-	// Debugging: Log the layers
-	console.log("Rendering Layers:", layers);
+        const canvas = getCanvasTexture().source.element;
+        const ctx = canvas.getContext('2d');
 
-	// Clear canvas
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.fillStyle = backgroundColor;
-	ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-	layers.forEach(layer => {
-		ctx.save();
-		ctx.translate(layer.x, layer.y);
-		ctx.rotate(layer.rotation * Math.PI / 180);
-		ctx.scale(layer.scale, layer.scale);
+        layers.forEach(layer => {
+            console.log("Drawing Layer:", JSON.stringify(layer));  // Log each layer being drawn
 
-		if (layer.type === "text") {
-			console.log("Drawing Text Layer:", layer);
-			ctx.font = `${layer.fontSize}px Arial, sans-serif`;
-			ctx.fillStyle = layer.color;
-			ctx.fillText(layer.content, 0, 0);
-		} else if (layer.type === "image") {
-			console.log("Drawing Image Layer:", layer);
-			const image = new Image();
-			image.src = layer.content;
-			image.onload = () => {
-				ctx.drawImage(image, -layer.imageWidth / 2, -layer.imageHeight / 2, layer.imageWidth, layer.imageHeight);
-				getCanvasTexture().source.update(); // Update texture after drawing
-			};
-			image.onerror = () => console.error(`Failed to load image: ${layer.content}`);
-		}
+            ctx.save();
+            ctx.translate(layer.x, layer.y);
+            ctx.rotate(layer.rotation * Math.PI / 180);
+            ctx.scale(layer.scale, layer.scale);
 
-		ctx.restore();
-	});
+            if (layer.type === 'text') {
+                ctx.font = `${layer.fontSize}px Arial, sans-serif`;
+                ctx.fillStyle = layer.color;
+                ctx.fillText(layer.content, 0, 0);
+                console.log(`Rendered text: ${layer.content}`);
+            } else if (layer.type === 'image') {
+                const image = new Image();
+                image.src = layer.content;
+                image.onload = () => {
+                    ctx.drawImage(
+                        image,
+                        -layer.imageWidth / 2,
+                        -layer.imageHeight / 2,
+                        layer.imageWidth,
+                        layer.imageHeight
+                    );
+                    getCanvasTexture().source.update();
+                };
+            }
+            ctx.restore();
+        });
 
-	getCanvasTexture().source.update();
-}
+        getCanvasTexture().source.update();
+    }
 
-/* -------------- EXPOSED FUNCTIONS FOR DART -------------- */
-// Adds a new layer from Dart
-window.addLayer = (type, content, options) => {
-	const layer = {
-		id: `layer_${layers.length + 1}`,
-		type,
-		content,
-		order: options.order || (layers.length + 1),
-		x: options.x || 0,
-		y: options.y || 0,
-		rotation: options.rotation || 0,
-		scale: options.scale || 1,
-		fontSize: options.fontSize || 24,
-		color: options.color || "#000000",
-		imageWidth: options.imageWidth || 100,
-		imageHeight: options.imageHeight || 100,
-	};
-	addLayer(layer);
-};
-window.removeLayer = removeLayer;
-window.updateLayer = updateLayer;
-window.setBackgroundColor = setBackgroundColor;
-window.getLayers = () => layers;
+    /* -------------- EXPOSED FUNCTIONS FOR DART -------------- */
+    // Adds a new layer from Dart
+    window.addLayerToJS = function (
+        id,
+        type,
+        content,
+        order,
+        x,
+        y,
+        rotation,
+        scale,
+        fontSize,
+        color,
+        imageWidth,
+        imageHeight
+    ) {
+        console.log("addLayerToJS: I am here")
+        console.log("addLayerToJS got: ", {
+            id,
+            type,
+            content,
+            order,
+            x,
+            y,
+            rotation,
+            scale,
+            fontSize,
+            color,
+            imageWidth,
+            imageHeight
+        });
 
-/* -------------- MODEL EVENT HANDLERS -------------- */
-function onModelLoadStarted() {
-	try {
-		// For mobile platforms
-		if (typeof ModelLoadStarted !== 'undefined' && ModelLoadStarted.postMessage) {
-			console.log('Model Load Started on Mobile');
-			ModelLoadStarted.postMessage("model_load_started");
-		}
-		// For web platforms
-		else if (typeof window.ModelLoadStarted !== 'undefined') {
-			console.log('Model Load Started on Web');
-			const event = new Event('ModelLoadStarted');
-			window.dispatchEvent(event);
-		} else {
-			console.error('ModelLoadStarted is not defined on any platform');
-		}
-	} catch (error) {
-		console.error('Error in onModelLoadStarted:', error);
-	}
-}
+        // Now create the layer using the actual 'id' from Dart:
+        const layer = {
+            id: id,
+            type: type,
+            content: content,
+            order: order,
+            x: x,
+            y: y,
+            rotation: rotation,
+            scale: scale,
+            fontSize: fontSize,
+            color: color,
+            imageWidth: imageWidth,
+            imageHeight: imageHeight,
+        };
 
-function onModelLoaded() {
-	try {
-		// For mobile platforms
-		if (typeof ModelLoaded !== 'undefined' && ModelLoaded.postMessage) {
-			console.log('Model Loaded on Mobile');
-			ModelLoaded.postMessage("model_loaded");
-		}
-		// For web platforms
-		else if (typeof window.ModelLoaded !== 'undefined') {
-			console.log('Model Loaded on Web');
-			const event = new Event('ModelLoaded');
-			window.dispatchEvent(event);
-		} else {
-			console.error('ModelLoaded is not defined on any platform');
-		}
-	} catch (error) {
-		console.error('Error in onModelLoaded:', error);
-	}
-}
+        // Insert or update
+        addLayer(layer);
+    };
 
-/* -------------- EXPORT/SAVE GLB -------------- */
-window.saveGLB = async function() {
-	console.log("Save button clicked");
-	const modelViewer = getModelViewer();
-	const glTF = await modelViewer.exportScene();
+    window.updateLayerInJS = function (
+        id,            // 1
+        type,          // 2
+        content,       // 3
+        order,         // 4
+        x,             // 5
+        y,             // 6
+        rotation,      // 7
+        scale,         // 8
+        fontSize,      // 9
+        color,         // 10
+        imageWidth,    // 11
+        imageHeight    // 12
+    ) {
+        console.log("🔄 JS updateLayerInJS called with:", {
+            id, type, content, order, x, y, rotation, scale, fontSize, color, imageWidth, imageHeight
+        });
 
-	// Create filename based on current datetime
-	const filename = `save-${new Date().toISOString().replace(/:/g, "-")}.glb`;
-	const file = new File([glTF], filename);
-	try {
-		await sendFileToDart(file, "save");
-		console.log("Saved model and sent to Dart");
-	} catch (error) {
-		console.error("Error saving model:", error);
-		// Fallback to direct download
-		const link = document.createElement("a");
-		link.download = file.name;
-		link.href = URL.createObjectURL(file);
-		link.click();
-	}
-};
+        const newProps = {
+            type: type,
+            content: content,
+            order: order,
+            x: x,
+            y: y,
+            rotation: rotation,
+            scale: scale,
+            fontSize: fontSize,
+            color: color,
+            imageWidth: imageWidth,
+            imageHeight: imageHeight
+        };
 
-window.exportGLB = async function() {
-	console.log("Export button clicked");
-	const modelViewer = getModelViewer();
-	const glTF = await modelViewer.exportScene();
+        // merges the newProps into the existing layer with `id`
+        updateLayer(id, newProps);
+    };
 
-	// Create filename based on current datetime
-	const filename = `export-${new Date().toISOString().replace(/:/g, "-")}.glb`;
-	const file = new File([glTF], filename);
-	try {
-		await sendFileToDart(file, "export");
-		console.log("Exported model and sent to Dart");
-	} catch (error) {
-		console.error("Error exporting model:", error);
-		// Fallback to direct download
-		const link = document.createElement("a");
-		link.download = file.name;
-		link.href = URL.createObjectURL(file);
-		link.click();
-	}
-};
+    window.removeLayerFromJS = removeLayer;
+    window.setBackgroundColorJS = (color) => {
+        if (!color) {
+            console.warn("⚠️ Invalid background color received:", color);
+        }
+        if (backgroundColor !== color) {
+            backgroundColor = color;
+            console.log("✅ Background Color Set to: -->" + color + "<--");
+            renderLayers();
+        } else {
+            console.log("⚠️ Skipping redundant background update.");
+        }
+    }
+    window.getLayers = () => layers;
 
-/* -------------- UTILITY -------------- */
-// Return the <model-viewer> element
-function getModelViewer() {
-	return document.getElementById('modelViewer');
-}
+    console.log("✅ JS function 'clearAllLayersJS' is now defined");
+    //window.clearAllLayersJS = function () {
+    //    layers = [];
+    //    renderLayers();
+    //};
 
-// Send the file to the Flutter side if available
-async function sendFileToDart(file, action) {
-	const reader = new FileReader();
-	reader.onload = function(event) {
-		const base64data = event.target.result.split(',')[1]; // Remove data: URL prefix
-		const fileData = {
-			name: file.name,
-			type: file.type,
-			size: file.size,
-			lastModified: file.lastModified,
-			content: base64data,
-			action: action
-		};
-		const fileDataJson = JSON.stringify(fileData);
+    /* -------------- MODEL EVENT HANDLERS -------------- */
+    function onModelLoadStarted() {
+        try {
+            // For mobile platforms
+            if (typeof ModelLoadStarted !== 'undefined' && ModelLoadStarted.postMessage) {
+                console.log('Model Load Started on Mobile');
+                ModelLoadStarted.postMessage("model_load_started");
+            }
+            // For web platforms
+            else if (typeof window.ModelLoadStarted !== 'undefined') {
+                console.log('Model Load Started on Web');
+                const event = new Event('ModelLoadStarted');
+                window.dispatchEvent(event);
+            } else {
+                console.error('ModelLoadStarted is not defined on any platform');
+            }
+        } catch (error) {
+            console.error('Error in onModelLoadStarted:', error);
+        }
+    }
 
-		if (typeof ExportModel !== 'undefined' && ExportModel.postMessage) {
-			// For mobile platforms
-			console.log('Sending file to Dart via ExportModel.postMessage');
-			ExportModel.postMessage(fileDataJson);
-		} else if (typeof window.ModelSaved !== 'undefined') {
-			console.log('Model Loaded on Web');
-			const event = new CustomEvent('ModelSaved', {
-				detail: fileDataJson
-			});
-			window.dispatchEvent(event);
+    function onModelLoaded() {
+        try {
+            // For mobile platforms
+            if (typeof ModelLoaded !== 'undefined' && ModelLoaded.postMessage) {
+                console.log('Model Loaded on Mobile');
+                ModelLoaded.postMessage("model_loaded");
+            }
+            // For web platforms
+            else if (typeof window.ModelLoaded !== 'undefined') {
+                console.log('Model Loaded on Web');
+                const event = new Event('ModelLoaded');
+                window.dispatchEvent(event);
+            } else {
+                console.error('ModelLoaded is not defined on any platform');
+            }
+        } catch (error) {
+            console.error('Error in onModelLoaded:', error);
+        }
+    }
 
-			// If exporting but no mobile channel, fallback to download
-			if (action === "export") {
-				console.error('ExportModel is not defined');
-				const link = document.createElement("a");
-				link.download = file.name;
-				link.href = URL.createObjectURL(file);
-				link.click();
-			}
-		} else {
-			console.error('ExportModel is not defined');
-			// Fallback to direct download
-			const link = document.createElement("a");
-			link.download = file.name;
-			link.href = URL.createObjectURL(file);
-			link.click();
-		}
-	};
-	reader.readAsDataURL(file);
-}
+    /* -------------- EXPORT/SAVE GLB -------------- */
+    window.saveGLB = async function () {
+        console.log("Save button clicked");
+        const modelViewer = getModelViewer();
+        const glTF = await modelViewer.exportScene();
 
-// Initialize everything immediately
-tryInitialize();
+        // Create filename based on current datetime
+        const filename = `save-${new Date().toISOString().replace(/:/g, "-")}.glb`;
+        const file = new File([glTF], filename);
+        try {
+            await sendFileToDart(file, "save");
+            console.log("Saved model and sent to Dart");
+        } catch (error) {
+            console.error("Error saving model:", error);
+            // Fallback to direct download
+            const link = document.createElement("a");
+            link.download = file.name;
+            link.href = URL.createObjectURL(file);
+            link.click();
+        }
+    };
 
-// Additional listeners for disabling context menu, selection, etc.
-document.addEventListener('DOMContentLoaded', () => {
-	document.addEventListener('contextmenu', (event) => {
-		event.preventDefault();
-	});
+    window.exportGLB = async function () {
+        console.log("Export button clicked");
+        const modelViewer = getModelViewer();
+        const glTF = await modelViewer.exportScene();
 
-	document.addEventListener('selectstart', (event) => {
-		event.preventDefault();
-	});
+        // Create filename based on current datetime
+        const filename = `export-${new Date().toISOString().replace(/:/g, "-")}.glb`;
+        const file = new File([glTF], filename);
+        try {
+            await sendFileToDart(file, "export");
+            console.log("Exported model and sent to Dart");
+        } catch (error) {
+            console.error("Error exporting model:", error);
+            // Fallback to direct download
+            const link = document.createElement("a");
+            link.download = file.name;
+            link.href = URL.createObjectURL(file);
+            link.click();
+        }
+    };
 
-	document.body.style.setProperty('-webkit-touch-callout', 'none');
-});
+    /* -------------- UTILITY -------------- */
+    // Return the <model-viewer> element
+    function getModelViewer() {
+        return document.getElementById('modelViewer');
+    }
+
+    // Send the file to the Flutter side if available
+    async function sendFileToDart(file, action) {
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            const base64data = event.target.result.split(',')[1]; // Remove data: URL prefix
+            const fileData = {
+                name: file.name,
+                type: file.type,
+                size: file.size,
+                lastModified: file.lastModified,
+                content: base64data,
+                action: action
+            };
+            const fileDataJson = JSON.stringify(fileData);
+
+            if (typeof ExportModel !== 'undefined' && ExportModel.postMessage) {
+                // For mobile platforms
+                console.log('Sending file to Dart via ExportModel.postMessage');
+                ExportModel.postMessage(fileDataJson);
+            } else if (typeof window.ModelSaved !== 'undefined') {
+                console.log('Model Loaded on Web');
+                const event = new CustomEvent('ModelSaved', {
+                    detail: fileDataJson
+                });
+                window.dispatchEvent(event);
+
+                // If exporting but no mobile channel, fallback to download
+                if (action === "export") {
+                    console.error('ExportModel is not defined');
+                    const link = document.createElement("a");
+                    link.download = file.name;
+                    link.href = URL.createObjectURL(file);
+                    link.click();
+                }
+            } else {
+                console.error('ExportModel is not defined');
+                // Fallback to direct download
+                const link = document.createElement("a");
+                link.download = file.name;
+                link.href = URL.createObjectURL(file);
+                link.click();
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Initialize everything immediately
+    document.addEventListener('DOMContentLoaded', () => {
+        customElements.whenDefined('model-viewer').then(() => {
+            tryInitialize();
+        });
+    });
+
+    // Additional listeners for disabling context menu, selection, etc.
+    document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+        });
+
+        document.addEventListener('selectstart', (event) => {
+            event.preventDefault();
+        });
+
+        document.body.style.setProperty('-webkit-touch-callout', 'none');
+    });
 
 </script>
