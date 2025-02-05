@@ -179,7 +179,19 @@
         imageWidth,
         imageHeight
     ) {
-        console.log("addLayerToJS: I am here")
+        console.log("addLayerToJS: id: " + id)
+        console.log("addLayerToJS: type: " + type)
+        console.log("addLayerToJS: content: " + content)
+        console.log("addLayerToJS: order: " + order)
+        console.log("addLayerToJS: x: " + x)
+        console.log("addLayerToJS: y: " + y)
+        console.log("addLayerToJS: rotation: " + rotation)
+        console.log("addLayerToJS: scale: " + scale)
+        console.log("addLayerToJS: fontSize: " + fontSize)
+        console.log("addLayerToJS: color: " + color)
+        console.log("addLayerToJS: imageWidth: " + imageWidth)
+        console.log("addLayerToJS: imageHeight: " + imageHeight)
+
         console.log("addLayerToJS got: ", {
             id,
             type,
@@ -210,6 +222,20 @@
             imageWidth: imageWidth,
             imageHeight: imageHeight,
         };
+
+        // log the layers all properties
+        console.log("hop001: id=" + layer.id)
+        console.log("hop001: type=" + layer.type)
+        console.log("hop001: content=" + layer.content)
+        console.log("hop001: order=" + layer.order)
+        console.log("hop001: x=" + layer.x)
+        console.log("hop001: y=" + layer.y)
+        console.log("hop001: rotation=" + layer.rotation)
+        console.log("hop001: scale=" + layer.scale)
+        console.log("hop001: fontSize=" + layer.fontSize)
+        console.log("hop001: color=" + layer.color)
+        console.log("hop001: imageWidth=" + layer.imageWidth)
+        console.log("hop001: imageHeight=" + layer.imageHeight)
 
         // Insert or update
         addLayer(layer);
@@ -408,13 +434,6 @@
         reader.readAsDataURL(file);
     }
 
-    // Initialize everything immediately
-    document.addEventListener('DOMContentLoaded', () => {
-        customElements.whenDefined('model-viewer').then(() => {
-            tryInitialize();
-        });
-    });
-
     // Additional listeners for disabling context menu, selection, etc.
     document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('contextmenu', (event) => {
@@ -423,6 +442,15 @@
 
         document.addEventListener('selectstart', (event) => {
             event.preventDefault();
+        });
+
+        console.log("⚡ DOMContentLoaded event fired!");
+
+        customElements.whenDefined('model-viewer').then(() => {
+            console.log("✅ model-viewer component is ready!");
+            tryInitialize();
+        }).catch(error => {
+            console.error("❌ model-viewer failed to initialize:", error);
         });
 
         document.body.style.setProperty('-webkit-touch-callout', 'none');
