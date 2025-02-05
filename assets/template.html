@@ -70,13 +70,19 @@
 
     // Resets or returns existing canvas texture
     function getCanvasTexture() {
-        if (!canvasTexture) {
-            console.log("Creating new canvas texture");
-            const modelViewer = getModelViewer();
-            canvasTexture = modelViewer.createCanvasTexture();
-        }
-        return canvasTexture;
+      const modelViewer = getModelViewer();
+      if (!modelViewer) {
+        console.error("⚠️ Model viewer is not ready yet!");
+        return null;  // Prevent further errors
+      }
+
+      if (!canvasTexture) {
+        console.log("Creating new canvas texture");
+        canvasTexture = modelViewer.createCanvasTexture();
+      }
+      return canvasTexture;
     }
+
 
     // Adjust canvas resolution (from original code)
     function adjustCanvasResolution(canvas) {
