@@ -24,38 +24,13 @@ external void addLayerToJS(
     int visible
     );
 
-// @JS()
-// external void removeLayerFromJS(String id);
-
-/// IMPORTANT: Notice we accept type, content, etc. in the correct order now:
-// @JS()
-// external void updateLayerInJS(
-//     String id,
-//     String type,
-//     String content,
-//     int order,
-//     int x,
-//     int y,
-//     int rotation,
-//     double scale,
-//     int fontSize,
-//     String color,
-//     double? imageWidth,
-//     double? imageHeight,
-//     bool visible
-//     );
-
 @JS()
 external void setBackgroundColorJS(String color);
 
-// @JS()
-// external void toggleControlsVisibility();
 @JS()
 external void exportGLB();
 @JS()
 external void saveGLB();
-// @JS()
-// external void clearAllLayersJS();
 
 class WebModelEditor {
 
@@ -124,25 +99,10 @@ class WebModelEditor {
 
   void updateLayer(Layer layer) {
     print("Updating Layer: ${layer.id}");
-    // updateLayerInJS(
-    //   layer.id,
-    //   layer.type == LayerType.text ? "text" : "image",
-    //   layer.content ?? "",
-    //   layer.order,
-    //   layer.x ?? 0,
-    //   layer.y ?? 0,
-    //   layer.rotation ?? 0,
-    //   layer.scale ?? 1.0,
-    //   layer.fontSize ?? 24,
-    //   layer.color?.toHex() ?? "#000000",
-    //   layer.imageWidth,
-    //   layer.imageHeight,
-    // );
   }
 
   void removeLayer(String id) {
     print("Removing Layer: $id");
-    // removeLayerFromJS(id);
   }
 
   // Possibly omit or fix if you want background color
@@ -151,12 +111,10 @@ class WebModelEditor {
     setBackgroundColorJS(hexColor);
   }
 
-  // void export() => exportGLB();
-  // void export() => addTestImageLayer();
-  void export() => addBoth();
+  void export() => addTestBoth();
   void save() => saveGLB();
 
-  void addBoth() {
+  void addTestBoth() {
     addTestImageLayer();
     addTestTextLayer();
     setTestBackgroundColor();

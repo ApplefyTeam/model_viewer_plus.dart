@@ -343,45 +343,7 @@
         addLayer(layer);
     };
 
-    window.updateLayerInJS = function (
-        id,            // 1
-        type,          // 2
-        content,       // 3
-        order,         // 4
-        x,             // 5
-        y,             // 6
-        rotation,      // 7
-        scale,         // 8
-        fontSize,      // 9
-        color,         // 10
-        imageWidth,    // 11
-        imageHeight,    // 12
-        visible    // 13
-    ) {
-        console.log("🔄 JS updateLayerInJS called with:", {
-            id, type, content, order, x, y, rotation, scale, fontSize, color, imageWidth, imageHeight, visible
-        });
 
-        const newProps = {
-            type: type,
-            content: content,
-            order: order,
-            x: x,
-            y: y,
-            rotation: rotation,
-            scale: scale,
-            fontSize: fontSize,
-            color: color,
-            imageWidth: imageWidth,
-            imageHeight: imageHeight,
-            visible: visible
-        };
-
-        // merges the newProps into the existing layer with `id`
-        updateLayer(id, newProps);
-    };
-
-    window.removeLayerFromJS = removeLayer;
     window.setBackgroundColorJS = (color) => {
         if (!color) {
             console.warn("⚠️ Invalid background color received:", color);
@@ -394,13 +356,6 @@
             console.log("⚠️ Skipping redundant background update.");
         }
     }
-    window.getLayers = () => layers;
-
-    console.log("✅ JS function 'clearAllLayersJS' is now defined");
-    //window.clearAllLayersJS = function () {
-    //    layers = [];
-    //    renderLayers();
-    //};
 
     /* -------------- MODEL EVENT HANDLERS -------------- */
     function onModelLoadStarted() {
