@@ -1,0 +1,477 @@
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<style>
+    body,
+    model-viewer {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      -webkit-touch-callout: none;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+</style>
+<script type="module" src="model-viewer.min.js" defer></script>
+<!-- body -->
+
+<script>
+    let canvasTexture = null;
+
+    let bgColorDefault = "#ffffff";
+    let textColorDefault = "#000000";
+    const defaultImageWidth = 100;
+    const defaultImageHeight = 100;
+
+    const canvasSize = 1024;
+    const imageId = "image-print";
+
+    let pendingCanvasUpdate = null;
+
+   document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('contextmenu', (event) => {
+        event.preventDefault();
+    });
+
+    document.addEventListener('selectstart', (event) => {
+        event.preventDefault();
+    });
+
+    document.body.style.setProperty('-webkit-touch-callout', 'none');
+});
+
+    function getCanvasTexture() {
+      if (canvasTexture) return canvasTexture;
+      console.log("Creating new canvas texture");
+      const modelViewer = getModelViewer();
+      canvasTexture = modelViewer.createCanvasTexture();
+      updateCanvasTexture1();
+      return canvasTexture;
+    }
+
+    window.updateCanvasTexture1 = async function (
+      customText,
+      color,
+      backgroundColor,
+      fontSize,
+      textX,
+      textY,
+      texture,
+      rotation,
+      imageSrc,
+      imageRotation,
+      imageX,
+      imageY,
+      imageWidth,
+      imageHeight,
+      scale
+    ) {
+      pendingCanvasUpdate = {
+        customText,
+        color,
+        backgroundColor,
+        fontSize,
+        textX,
+        textY,
+        texture,
+        rotation,
+        imageSrc,
+        imageRotation,
+        imageX,
+        imageY,
+        imageWidth,
+        imageHeight,
+        scale: scale || 1.0, // Default scale, todo: remove magic constant
+      };
+      requestAnimationFrame(updateModel);
+    }
+
+    function updateModel() {
+      if (!pendingCanvasUpdate) return;
+
+      const {
+        customText,
+        color,
+        backgroundColor,
+        fontSize,
+        textX,
+        textY,
+        texture,
+        rotation,
+        imageSrc,
+        imageRotation,
+        imageX,
+        imageY,
+        imageWidth,
+        imageHeight,
+        scale,
+      } = pendingCanvasUpdate;
+
+      pendingCanvasUpdate = null;
+
+      const canvas = canvasTexture ? canvasTexture.source.element : document.createElement('canvas');
+      const offscreenCanvas = canvas.offscreenCanvas;
+      const ctx = canvas.getContext('2d');
+      console.log("offscreen canvas: ", canvas.offscreenCanvas);
+      // log image rotation, x and y
+      console.log("Image rotation: ", imageRotation);
+      console.log("Image x: ", imageX);
+      console.log("Image y: ", imageY);
+
+      ctx.fillStyle = backgroundColor || bgColorDefault;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      if (imageSrc) {
+        console.log("Image source provided");
+        const image = new Image(defaultImageWidth, defaultImageHeight);
+        // set image id
+        image.onload = function () {
+          console.log("Image loaded, with scale:", scale);
+          ctx.save();
+
+          // Scale the image
+          const scaledWidth = (imageWidth || defaultImageWidth) * scale;
+          const scaledHeight = (imageHeight || defaultImageHeight) * scale;
+
+          // Calculate the center point of the image
+          const centerX = 60 + (imageX || 0) + defaultImageWidth / 2;
+          const centerY = 96 * (canvas.height / 512) + (imageY || 0);
+
+          // Translate to the center of the image
+          ctx.translate(centerX, centerY);
+
+          // Rotate around this center point
+          ctx.rotate((imageRotation || 0) * Math.PI / 180);
+
+          // Scale to flip vertically (if needed)
+          ctx.scale(1, -1);
+
+          // Draw the image centered on this point
+          ctx.drawImage(
+            image,
+            -scaledWidth / 2,
+            -scaledHeight / 2,
+            scaledWidth,
+            scaledHeight
+          );
+          ctx.restore();
+
+          if (customText != null) {
+            drawText(canvas, customText, color, fontSize, textX, textY, rotation);
+          }
+
+          if (texture) updateTexture(texture);
+
+          if (canvasTexture) {
+            console.log("Updating canvas texture source 1");
+            canvasTexture.source.update();
+          }
+        }
+        image.onerror = function () {
+          console.error("Image load error");
+          if (customText != null) {
+            drawText(canvas, customText, color, fontSize, textX, textY, rotation);
+          }
+
+          if (texture) updateTexture(texture);
+
+          if (canvasTexture) {
+            console.log("Updating canvas texture source 1");
+            canvasTexture.source.update();
+          }
+        }
+        image.src = imageSrc;
+      }
+      console.log("drawing text if required");
+      if (customText != null) {
+        drawText(canvas, customText, color, fontSize, textX, textY, rotation);
+      }
+
+      if (texture) updateTexture(texture);
+
+      if (canvasTexture) {
+        console.log("Updating canvas texture source 1");
+        canvasTexture.source.update();
+      }
+
+    }
+
+    function drawText(canvas, customText, color, fontSize, textX, textY, rotation) {
+      const ctx = canvas.getContext('2d');
+
+      ctx.save();
+
+      const baseFontSize = fontSize || 24;
+      const adjustedFontSize = baseFontSize * (canvas.width / 512); // Scale font size based on canvas size
+      ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
+
+      // Measure text dimensions
+      const textMetrics = ctx.measureText(customText);
+      const textWidth = textMetrics.width;
+      const textHeight = adjustedFontSize; // Approximate height based on font size
+
+      // Calculate the position where the text should be placed
+      const posX = (textX != null ? textX : 0) * (canvas.width / 512);
+      const posY = (textY != null ? textY : 0) * (canvas.height / 512);
+
+      // Move to the desired position
+      ctx.translate(
+        posX + 35 * (canvas.width / 512) + textWidth / 2,
+        posY + 86 * (canvas.height / 512)
+      );
+
+      //flip vertically
+      ctx.scale(1, -1);
+
+      // Apply rotation
+      ctx.rotate((rotation || 0) * Math.PI / 180);
+
+      // Set text alignment and baseline
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+
+      // Enable image smoothing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+
+      // Set fill style
+      ctx.fillStyle = color || textColorDefault;
+
+      // Draw the text at (0, 0)
+      ctx.fillText(customText, 0, 0);
+
+      ctx.restore();
+    }
+
+    function updateTexture(texture) {
+      const modelViewer = getModelViewer();
+      const material = modelViewer.model.materials[0];
+      const {baseColorTexture} = material.pbrMetallicRoughness;
+
+      console.log("Texture type changed to:", texture);
+      switch (texture) {
+        case "none":
+          baseColorTexture.setTexture(null);
+          break;
+        case "text":
+          baseColorTexture.setTexture(getCanvasTexture());
+          break;
+      }
+    }
+
+    function initializeModelViewer() {
+      console.log("Initializing Model Viewer");
+
+      canvasTexture = null; // resetting canvas texture here every time we open a new model
+
+      onModelLoadStarted();
+
+      const modelViewer = getModelViewer();
+
+      if (!modelViewer) {
+        console.error("Model viewer element not found");
+        return;
+      }
+
+      // log device pixel ratio
+      console.log("Device pixel ratio:", window.devicePixelRatio);
+
+      modelViewer.addEventListener("load", async () => {
+        console.log("Model viewer loaded");
+        const material = modelViewer.model.materials[0];
+
+        // Initialize canvas texture
+        canvasTexture = modelViewer.createCanvasTexture();
+
+        const offscreenCanvas = document.createElement('canvas');
+        adjustCanvasResolution(offscreenCanvas);
+        canvasTexture.source.element.offscreenCanvas = offscreenCanvas;
+
+
+        adjustCanvasResolution(canvasTexture.source.element);
+        onModelLoaded();
+      });
+
+      modelViewer.addEventListener("error", (error) => {
+        console.error("Model viewer error:", error);
+      });
+    }
+
+    // Function to adjust the canvas resolution dynamically
+    // most of this is hardcoded because no time for better investigation
+    function adjustCanvasResolution(canvas) {
+
+      // Define a base size (e.g., 512x512)
+      const baseSize = 512;
+
+      const ratio = 3;
+
+      canvas.width = canvasSize;
+      canvas.height = canvasSize;
+
+      // Scale the context
+      const ctx = canvas.getContext("2d");
+      ctx.scale(2, 2);
+
+      console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
+    }
+
+
+    // This function will attempt to initialize as soon as possible
+    function tryInitialize() {
+      if (document.readyState === 'loading') {
+        // DOM not ready, add event listener
+        document.addEventListener('DOMContentLoaded', initializeModelViewer);
+      } else {
+        // DOM is ready, call the function directly
+        initializeModelViewer();
+      }
+    }
+
+    
+
+  // Define ModelLoaded and ModelLoadedStarted explicitly on the window object
+  window.ModelLoaded = window.ModelLoaded || {};
+  window.ModelLoadStarted = window.ModelLoadStarted || {};
+  window.ModelSaved = window.ModelSaved || {};
+
+  function onModelLoadStarted() {
+    try {
+      // For mobile platforms
+      if (typeof ModelLoadStarted !== 'undefined' && ModelLoadStarted.postMessage) {
+        console.log('Model Load Started on Mobile');
+        ModelLoadStarted.postMessage("model_load_started");
+      }
+      // For web platforms
+      else if (typeof window.ModelLoadStarted !== 'undefined') {
+        console.log('Model Load Started on Web');
+        const event = new Event('ModelLoadStarted');
+        window.dispatchEvent(event);
+      }
+      // Fallback in case ModelLoadStarted is undefined
+      else {
+        console.error('ModelLoadStarted is not defined on any platform');
+      }
+    } catch (error) {
+      console.error('Error in onModelLoadStarted:', error);
+    }
+  }
+
+  function onModelLoaded() {
+    try {
+        // For mobile platforms
+        if (typeof ModelLoaded !== 'undefined' && ModelLoaded.postMessage) {
+          console.log('Model Loaded on Mobile');
+          ModelLoaded.postMessage("model_loaded");
+        }
+        // For web platforms
+        else if (typeof window.ModelLoaded !== 'undefined') {
+          console.log('Model Loaded on Web');
+          const event = new Event('ModelLoaded');
+          window.dispatchEvent(event);
+        }
+        // Fallback in case ModelLoaded is undefined
+        else {
+          console.error('ModelLoaded is not defined on any platform');
+        }
+    } catch (error) {
+      console.error('Error in onModelLoaded:', error);
+    }
+  }
+
+      // Attach saveGLB to the window object
+    window.saveGLB = async function () {
+      console.log("Save button clicked");
+
+      const modelViewer = getModelViewer();
+      const glTF = await modelViewer.exportScene();
+
+      // Create filename based on current datetime
+      const filename = `save-${new Date().toISOString().replace(/:/g, "-")}.glb`;
+      const file = new File([glTF], filename);
+      try {
+        await sendFileToDart(file, "save");
+        console.log("Saved model and sent to Dart");
+      } catch (error) {
+        console.error("Error saving model:", error);
+        // Fallback to downloading the file
+        const link = document.createElement("a");
+        link.download = file.name;
+        link.href = URL.createObjectURL(file);
+        link.click();
+      }
+    };
+
+  // Attach exportGLB to the window object
+  window.exportGLB = async function () {
+    const modelViewer = getModelViewer();
+    const glTF = await modelViewer.exportScene();
+
+    // Create filename based on current datetime
+    const filename = `export-${new Date().toISOString().replace(/:/g, "-")}.glb`;
+    const file = new File([glTF], filename);
+    try {
+      await sendFileToDart(file, "export");
+      console.log("Exported model and sent to Dart");
+    } catch (error) {
+      console.error("Error exporting model:", error);
+      // Fallback to downloading the file
+      const link = document.createElement("a");
+      link.download = file.name;
+      link.href = URL.createObjectURL(file);
+      link.click();
+    }
+  };
+
+  // Ensure getModelViewer is globally accessible
+  function getModelViewer() {
+    return document.getElementById('modelViewer');
+  }
+
+  // Make sendFileToDart globally accessible if needed
+  async function sendFileToDart(file, action) {
+    const reader = new FileReader();
+    reader.onload = function (event) {
+      const base64data = event.target.result.split(',')[1]; // Remove data URL prefix
+      const fileData = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified,
+        content: base64data,
+        action: action
+      };
+      const fileDataJson = JSON.stringify(fileData);
+
+      if (typeof ExportModel !== 'undefined' && ExportModel.postMessage) {
+        // For mobile platforms
+        console.log('Sending file to Dart via ExportModel.postMessage');
+        ExportModel.postMessage(fileDataJson);
+      } else if (typeof window.ModelSaved !== 'undefined') {
+          console.log('Model Loaded on Web');
+          const event = new CustomEvent('ModelSaved', { detail: fileDataJson });
+          window.dispatchEvent(event);
+
+          if (action == "export") {
+          console.error('ExportModel is not defined');
+            // Fallback to downloading the file
+            const link = document.createElement("a");
+            link.download = file.name;
+            link.href = URL.createObjectURL(file);
+            link.click();
+          }
+      } else {
+        console.error('ExportModel is not defined');
+        // Fallback to downloading the file
+        const link = document.createElement("a");
+        link.download = file.name;
+        link.href = URL.createObjectURL(file);
+        link.click();
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+    // Call tryInitialize immediately
+    tryInitialize();
+</script>
