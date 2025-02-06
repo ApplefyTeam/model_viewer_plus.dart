@@ -24,13 +24,20 @@
 
     /* --------------------- MODEL VIEWER INIT --------------------- */
     function tryInitialize() {
-        // If DOM not ready, wait; else call initializeModelViewer directly
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeModelViewer);
-        } else {
+    console.log("🚀 tryInitialize() called");
+
+    if (document.readyState === 'loading') {
+        console.log("⏳ Document still loading, waiting for DOMContentLoaded...");
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log("✅ DOMContentLoaded fired, initializing Model Viewer...");
             initializeModelViewer();
-        }
+        });
+    } else {
+        console.log("✅ Document already loaded, initializing Model Viewer...");
+        initializeModelViewer();
     }
+}
+
 
     // Called once the DOM is ready or immediately if DOM already loaded
     function initializeModelViewer() {
@@ -98,7 +105,8 @@
     /* -------------- MULTI-LAYER ADD/REMOVE/UPDATE -------------- */
     function addLayer(layer) {
         layers.push(layer);
-        layers.sort((a, b) => a.order - b.order);
+        //layers.sort((a, b) => a.order - b.order);
+
         renderLayers();
     }
 
@@ -118,50 +126,140 @@
 
     // Main rendering function for all layers
     let renderCallCount = 0;
-    function renderLayers() {
-        renderCallCount++;
-        console.log("Rendering Layers (Call#: " + renderCallCount + "):", layers);  // Log all layers before rendering
-        console.log("Layer count = " + layers.length);
 
-        const canvas = getCanvasTexture().source.element;
-        const ctx = canvas.getContext('2d');
+ function renderLayers() {
+    console.log(`🔄 Rendering ${layers.length} layers`);
 
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = backgroundColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        layers.forEach(layer => {
-            console.log("Drawing Layer:", JSON.stringify(layer));  // Log each layer being drawn
-
-            ctx.save();
-            ctx.translate(layer.x, layer.y);
-            ctx.rotate(layer.rotation * Math.PI / 180);
-            ctx.scale(layer.scale, layer.scale);
-
-            if (layer.type === 'text') {
-                ctx.font = `${layer.fontSize}px Arial, sans-serif`;
-                ctx.fillStyle = layer.color;
-                ctx.fillText(layer.content, 0, 0);
-                console.log(`Rendered text: ${layer.content}`);
-            } else if (layer.type === 'image') {
-                const image = new Image();
-                image.src = layer.content;
-                image.onload = () => {
-                    ctx.drawImage(
-                        image,
-                        -layer.imageWidth / 2,
-                        -layer.imageHeight / 2,
-                        layer.imageWidth,
-                        layer.imageHeight
-                    );
-                    getCanvasTexture().source.update();
-                };
-            }
-            ctx.restore();
-        });
-
-        getCanvasTexture().source.update();
+    const canvas = getCanvasTexture()?.source.element;
+    if (!canvas) {
+        console.error("🚨 ERROR: Canvas texture is null. Cannot render!");
+        return;
     }
+    const ctx = canvas.getContext('2d');
+
+    // Clear the canvas and set the background color
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Loop through layers and draw them one by one
+    layers.forEach((layer, index) => {
+        console.log(`🎨 Rendering Layer ${index + 1}/${layers.length}:`, layer);
+
+        if (layer.type === "text") {
+            drawTextLayer(layer, ctx, canvas);
+        } else if (layer.type === "image") {
+            drawImageLayer(layer, ctx, canvas);
+        } else {
+            console.warn(`⚠️ Unknown layer type: ${layer.type}`);
+        }
+    });
+
+    console.log("🔄 Updating canvas texture...");
+    getCanvasTexture()?.source.update();
+
+    forceTextureUpdate();
+    exportCanvasTexture();
+}
+
+/* ------------------------- TEXT LAYER ------------------------- */
+function drawTextLayer(layer, ctx, canvas) {
+    ctx.save();
+
+    const posX = (layer.x || 0) * (canvas.width / 512);
+    const posY = (layer.y || 0) * (canvas.height / 512);
+
+    ctx.translate(
+        posX + 35 * (canvas.width / 512),
+        posY + 86 * (canvas.height / 512)
+    );
+
+    ctx.scale(1, -1); // Flip vertically (as per original logic)
+    ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.font = `${(layer.fontSize || 24) * 2}px Arial, sans-serif`; // Scale font size
+    ctx.fillStyle = layer.color || textColorDefault;
+
+    console.log(`📝 Drawing text "${layer.content}" at (${posX}, ${posY})`);
+
+    ctx.fillText(layer.content, 0, 0);
+    ctx.restore();
+}
+
+/* ------------------------- IMAGE LAYER ------------------------- */
+function drawImageLayer(layer, ctx, canvas) {
+    console.log(`🖼️ Drawing Image: ${layer.content}`);
+
+    const image = new Image();
+    image.onload = function () {
+        ctx.save();
+
+        const posX = (layer.x || 0) * (canvas.width / 512);
+        const posY = (layer.y || 0) * (canvas.height / 512);
+
+        ctx.translate(
+            posX + 35 * (canvas.width / 512),
+            posY + 86 * (canvas.height / 512)
+        );
+
+        ctx.scale(1, -1);
+        ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+
+        const imageWidth = layer.imageWidth || 100;
+        const imageHeight = layer.imageHeight || 100;
+
+        ctx.drawImage(image, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
+
+        console.log(`📍 Image drawn at (${posX}, ${posY})`);
+        ctx.restore();
+
+        // Ensure texture updates after image loads
+        getCanvasTexture()?.source.update();
+        forceTextureUpdate();
+    };
+
+    image.onerror = function () {
+        console.error(`🚨 ERROR: Could not load image: ${layer.content}`);
+    };
+
+    image.src = layer.content; // Image URL or base64
+}
+
+/* ------------------------- FORCE TEXTURE UPDATE ------------------------- */
+function forceTextureUpdate() {
+    const modelViewer = getModelViewer();
+    if (!modelViewer) {
+        console.error("⚠️ Model viewer not found!");
+        return;
+    }
+
+    const material = modelViewer.model.materials[0];
+    const { baseColorTexture } = material.pbrMetallicRoughness;
+
+    baseColorTexture.setTexture(getCanvasTexture());
+    console.log("🔄 ModelViewer Texture Updated!");
+}
+
+
+
+
+function exportCanvasTexture() {
+    const canvas = getCanvasTexture()?.source.element;
+    if (!canvas) {
+        console.error("🚨 Cannot export: No canvas found!");
+        return;
+    }
+
+    const link = document.createElement('a');
+    link.download = "debug-texture.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+}
+
+
 
     /* -------------- EXPOSED FUNCTIONS FOR DART -------------- */
     // Adds a new layer from Dart
@@ -456,4 +554,5 @@
         document.body.style.setProperty('-webkit-touch-callout', 'none');
     });
 
+    tryInitialize();
 </script>
