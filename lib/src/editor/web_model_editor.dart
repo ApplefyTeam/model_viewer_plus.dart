@@ -31,15 +31,16 @@ class WebModelEditor {
     }
 
     if (state.layers.isEmpty){
-      return;
+      // send empty array to clear the canvas
+      renderLayersJS(js_util.jsify([]));
+    } else {
+      final JSArray jsLayers = convertLayersToJSArray(state.layers);
+
+      print("🚀 Sending layers to JS...");
+      renderLayersJS(jsLayers);
+
+      print("✅ State updated and sent to JavaScript.");
     }
-
-    final JSArray jsLayers = convertLayersToJSArray(state.layers);
-
-    print("🚀 Sending layers to JS...");
-    renderLayersJS(jsLayers);
-
-    print("✅ State updated and sent to JavaScript.");
   }
 
   void setCanvasBackgroundColor(String? hexColor) {
