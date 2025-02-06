@@ -21,6 +21,7 @@ external void addLayerToJS(
     String color,
     double? imageWidth,
     double? imageHeight,
+    int visible
     );
 
 // @JS()
@@ -41,10 +42,11 @@ external void addLayerToJS(
 //     String color,
 //     double? imageWidth,
 //     double? imageHeight,
+//     bool visible
 //     );
 
-// @JS()
-// external void setBackgroundColorJS(String color);
+@JS()
+external void setBackgroundColorJS(String color);
 
 // @JS()
 // external void toggleControlsVisibility();
@@ -75,6 +77,7 @@ class WebModelEditor {
         scale: 1.0,
         fontSize: 32,
         color: const Color(0xFF000000),
+        visible: true
       );
       addLayer(defaultLayer);
     }
@@ -95,6 +98,7 @@ class WebModelEditor {
         layer.color?.toHex() ?? "#000000",
         layer.imageWidth,
         layer.imageHeight,
+        layer.visible ? 1 : 0
       );
     }
   }
@@ -114,6 +118,7 @@ class WebModelEditor {
       layer.color?.toHex() ?? "#000000",
       layer.imageWidth,
       layer.imageHeight,
+      layer.visible ? 1 : 0
     );
   }
 
@@ -143,7 +148,7 @@ class WebModelEditor {
   // Possibly omit or fix if you want background color
   void setCanvasBackgroundColor(String? hexColor) {
     if (hexColor == null) return;
-    // setBackgroundColorJS(hexColor);
+    setBackgroundColorJS(hexColor);
   }
 
   // void export() => exportGLB();
@@ -154,6 +159,7 @@ class WebModelEditor {
   void addBoth() {
     addTestImageLayer();
     addTestTextLayer();
+    setTestBackgroundColor();
   }
 
   void addTestTextLayer() {
@@ -170,6 +176,7 @@ class WebModelEditor {
       scale: 1.0,
       fontSize: 16,
       color: const Color(0xFF0000FF), // Blue color for visibility
+      visible: true
     );
 
     print("🚀 Adding test layer to JS...");
@@ -187,6 +194,7 @@ class WebModelEditor {
       testLayer.color?.toHex() ?? "#000000",
       testLayer.imageWidth,
       testLayer.imageHeight,
+      testLayer.visible ? 1 : 0
     );
 
     print("✅ Test layer added successfully.");
@@ -208,6 +216,7 @@ class WebModelEditor {
       color: null, // Not needed for images
       imageWidth: 150, // Image width
       imageHeight: 150, // Image height
+      visible: false
     );
 
     print("🚀 Adding test image layer to JS...");
@@ -225,10 +234,21 @@ class WebModelEditor {
       "#000000", // Default color (not used for images)
       testImageLayer.imageWidth,
       testImageLayer.imageHeight,
+      testImageLayer.visible ? 1 : 0
     );
 
     print("✅ Test image layer added successfully.");
   }
 
+  void setTestBackgroundColor() {
+    print("🎨 Changing background color to test value...");
 
+    final testColor = "#add8e6"; // Light blue for visibility
+
+    print("🚀 Sending background color to JS: $testColor");
+
+    setBackgroundColorJS(testColor);
+
+    print("✅ Background color set successfully.");
+  }
 }

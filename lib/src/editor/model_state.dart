@@ -21,7 +21,9 @@ class Layer {
     this.fontSize,
     this.color,
     this.imageWidth,
-    this.imageHeight});
+    this.imageHeight,
+    this.visible = true
+  });
 
   final String id; // Unique id for the layer
   final LayerType? type; // `text` or `image`
@@ -35,6 +37,7 @@ class Layer {
   final Color? color;
   final double? imageWidth; // added to store original width
   final double? imageHeight; // added to store original height
+  bool visible; // for layer visibility
 
   Layer copyWith({String? id,
     LayerType? type,
@@ -47,7 +50,8 @@ class Layer {
     int? fontSize,
     Color? color,
     double? imageWidth,
-    double? imageHeight}) =>
+    double? imageHeight,
+    bool? visible}) =>
       Layer(
           id: id ?? this.id,
           type: type ?? this.type,
@@ -60,7 +64,9 @@ class Layer {
           fontSize: fontSize ?? this.fontSize,
           color: color ?? this.color,
           imageWidth: imageWidth ?? this.imageWidth,
-          imageHeight: imageHeight ?? this.imageHeight);
+          imageHeight: imageHeight ?? this.imageHeight,
+          visible: visible ?? this.visible
+      );
 }
 
 class ModelState {

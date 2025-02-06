@@ -144,6 +144,10 @@
 
         // Loop through layers and draw them one by one
         layers.forEach((layer, index) => {
+            if (layer.visible === 0){
+                console.log("Skipping hidden layer: ${layer.id}");
+                return;
+            }
             console.log(`🎨 Rendering Layer ${index + 1}/${layers.length}:`, layer);
 
             if (layer.type === "text") {
@@ -243,9 +247,6 @@
         console.log("🔄 ModelViewer Texture Updated!");
     }
 
-
-
-
     function exportCanvasTexture() {
         const canvas = getCanvasTexture()?.source.element;
         if (!canvas) {
@@ -258,8 +259,6 @@
         link.href = canvas.toDataURL("image/png");
         link.click();
     }
-
-
 
     /* -------------- EXPOSED FUNCTIONS FOR DART -------------- */
     // Adds a new layer from Dart
@@ -275,7 +274,8 @@
         fontSize,
         color,
         imageWidth,
-        imageHeight
+        imageHeight,
+        visible
     ) {
         console.log("addLayerToJS: id: " + id)
         console.log("addLayerToJS: type: " + type)
@@ -289,6 +289,7 @@
         console.log("addLayerToJS: color: " + color)
         console.log("addLayerToJS: imageWidth: " + imageWidth)
         console.log("addLayerToJS: imageHeight: " + imageHeight)
+        console.log("addLayerToJS: visible: " + visible)
 
         console.log("addLayerToJS got: ", {
             id,
@@ -302,7 +303,8 @@
             fontSize,
             color,
             imageWidth,
-            imageHeight
+            imageHeight,
+            visible
         });
 
         // Now create the layer using the actual 'id' from Dart:
@@ -319,6 +321,7 @@
             color: color,
             imageWidth: imageWidth,
             imageHeight: imageHeight,
+            visible: visible
         };
 
         // log the layers all properties
@@ -334,6 +337,7 @@
         console.log("hop001: color=" + layer.color)
         console.log("hop001: imageWidth=" + layer.imageWidth)
         console.log("hop001: imageHeight=" + layer.imageHeight)
+        console.log("hop001: visible=" + layer.visible)
 
         // Insert or update
         addLayer(layer);
@@ -351,10 +355,11 @@
         fontSize,      // 9
         color,         // 10
         imageWidth,    // 11
-        imageHeight    // 12
+        imageHeight,    // 12
+        visible    // 13
     ) {
         console.log("🔄 JS updateLayerInJS called with:", {
-            id, type, content, order, x, y, rotation, scale, fontSize, color, imageWidth, imageHeight
+            id, type, content, order, x, y, rotation, scale, fontSize, color, imageWidth, imageHeight, visible
         });
 
         const newProps = {
@@ -368,7 +373,8 @@
             fontSize: fontSize,
             color: color,
             imageWidth: imageWidth,
-            imageHeight: imageHeight
+            imageHeight: imageHeight,
+            visible: visible
         };
 
         // merges the newProps into the existing layer with `id`

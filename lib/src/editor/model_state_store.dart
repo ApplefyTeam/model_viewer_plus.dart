@@ -30,6 +30,9 @@ class ModelStateStore {
         scale: 1.0,
         fontSize: 24,
         color: Colors.black,
+        imageHeight: null,
+        imageWidth: null,
+        visible: true
       )
     ], backgroundColor: Colors.white);
 
