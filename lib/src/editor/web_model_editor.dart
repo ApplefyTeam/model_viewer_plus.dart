@@ -16,6 +16,7 @@ external void setBackgroundColorJS(String color);
 
 @JS()
 external void exportGLB();
+
 @JS()
 external void saveGLB();
 
@@ -66,13 +67,13 @@ class WebModelEditor {
       Layer(
         id: "test_layer",
         type: LayerType.text,
-        content: "Test Text",
+        content: "Test",
         order: 0,
         x: 0,
         y: 0,
-        rotation: 10,
-        scale: 1.2,
-        fontSize: 32,
+        rotation: 0,
+        scale: 1,
+        fontSize: 16,
         color: const Color(0xFF0000FF), // Blue
         visible: true,
       ),
