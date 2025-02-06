@@ -17,8 +17,9 @@
 <script>
 
 
+
     /* --------------------- MULTI-LAYER STATE --------------------- */
-    let layers = [];
+
     let backgroundColor = "#ffffff";
     let canvasTexture = null;
 
@@ -102,54 +103,28 @@
         console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
     }
 
-    /* -------------- MULTI-LAYER ADD/REMOVE/UPDATE -------------- */
-    function addLayer(layer) {
-        layers.push(layer);
-        //layers.sort((a, b) => a.order - b.order);
+    window.renderLayersJS = function (layers) {
+        console.log("🖌️ Received layer data from Dart, rendering...");
 
-        renderLayers();
-    }
-
-    function removeLayer(layerId) {
-        layers = layers.filter(layer => layer.id !== layerId);
-        renderLayers();
-    }
-
-    function updateLayer(layerId, newProperties) {
-        const layer = layers.find(layer => layer.id === layerId);
-        if (layer) {
-            Object.assign(layer, newProperties);
-            layers.sort((a, b) => a.order - b.order);
-            renderLayers();
-        }
-    }
-
-    // Main rendering function for all layers
-    let renderCallCount = 0;
-
-    function renderLayers() {
-        console.log(`🔄 Rendering ${layers.length} layers`);
-
+        // Reset stored layers (we don't track them in JS anymore)
         const canvas = getCanvasTexture()?.source.element;
         if (!canvas) {
-            console.error("🚨 ERROR: Canvas texture is null. Cannot render!");
+            console.error("🚨 ERROR: Canvas is null!");
             return;
         }
         const ctx = canvas.getContext('2d');
 
-        // Clear the canvas and set the background color
+        // Clear and set background
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = backgroundColor;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Loop through layers and draw them one by one
-        layers.forEach((layer, index) => {
-            if (layer.visible === 0){
-                console.log("Skipping hidden layer: ${layer.id}");
+        // Loop and draw each layer
+        layers.forEach(layer => {
+            if (!layer.visible) {
+                console.log(`⏭️ Skipping hidden layer: ${layer.id}`);
                 return;
             }
-            console.log(`🎨 Rendering Layer ${index + 1}/${layers.length}:`, layer);
-
             if (layer.type === "text") {
                 drawTextLayer(layer, ctx, canvas);
             } else if (layer.type === "image") {
@@ -164,7 +139,7 @@
 
         forceTextureUpdate();
         exportCanvasTexture();
-    }
+    };
 
     /* ------------------------- TEXT LAYER ------------------------- */
     function drawTextLayer(layer, ctx, canvas) {
@@ -260,90 +235,6 @@
         link.click();
     }
 
-    /* -------------- EXPOSED FUNCTIONS FOR DART -------------- */
-    // Adds a new layer from Dart
-    window.addLayerToJS = function (
-        id,
-        type,
-        content,
-        order,
-        x,
-        y,
-        rotation,
-        scale,
-        fontSize,
-        color,
-        imageWidth,
-        imageHeight,
-        visible
-    ) {
-        console.log("addLayerToJS: id: " + id)
-        console.log("addLayerToJS: type: " + type)
-        console.log("addLayerToJS: content: " + content)
-        console.log("addLayerToJS: order: " + order)
-        console.log("addLayerToJS: x: " + x)
-        console.log("addLayerToJS: y: " + y)
-        console.log("addLayerToJS: rotation: " + rotation)
-        console.log("addLayerToJS: scale: " + scale)
-        console.log("addLayerToJS: fontSize: " + fontSize)
-        console.log("addLayerToJS: color: " + color)
-        console.log("addLayerToJS: imageWidth: " + imageWidth)
-        console.log("addLayerToJS: imageHeight: " + imageHeight)
-        console.log("addLayerToJS: visible: " + visible)
-
-        console.log("addLayerToJS got: ", {
-            id,
-            type,
-            content,
-            order,
-            x,
-            y,
-            rotation,
-            scale,
-            fontSize,
-            color,
-            imageWidth,
-            imageHeight,
-            visible
-        });
-
-        // Now create the layer using the actual 'id' from Dart:
-        const layer = {
-            id: id,
-            type: type,
-            content: content,
-            order: order,
-            x: x,
-            y: y,
-            rotation: rotation,
-            scale: scale,
-            fontSize: fontSize,
-            color: color,
-            imageWidth: imageWidth,
-            imageHeight: imageHeight,
-            visible: visible
-        };
-
-        // log the layers all properties
-        console.log("hop001: id=" + layer.id)
-        console.log("hop001: type=" + layer.type)
-        console.log("hop001: content=" + layer.content)
-        console.log("hop001: order=" + layer.order)
-        console.log("hop001: x=" + layer.x)
-        console.log("hop001: y=" + layer.y)
-        console.log("hop001: rotation=" + layer.rotation)
-        console.log("hop001: scale=" + layer.scale)
-        console.log("hop001: fontSize=" + layer.fontSize)
-        console.log("hop001: color=" + layer.color)
-        console.log("hop001: imageWidth=" + layer.imageWidth)
-        console.log("hop001: imageHeight=" + layer.imageHeight)
-        console.log("hop001: visible=" + layer.visible)
-
-        // Insert or update
-        addLayer(layer);
-    };
-
-
     window.setBackgroundColorJS = (color) => {
         if (!color) {
             console.warn("⚠️ Invalid background color received:", color);
@@ -351,7 +242,6 @@
         if (backgroundColor !== color) {
             backgroundColor = color;
             console.log("✅ Background Color Set to: -->" + color + "<--");
-            renderLayers();
         } else {
             console.log("⚠️ Skipping redundant background update.");
         }
@@ -516,4 +406,5 @@
     });
 
     tryInitialize();
+
 </script>
