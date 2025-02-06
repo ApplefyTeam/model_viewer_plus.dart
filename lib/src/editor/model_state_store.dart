@@ -13,6 +13,12 @@ class ModelStateStore {
   Stream<bool> get exportClicks => _exportClicks.stream;
   Stream<bool> get saveClicks => _saveClicks.stream;
 
+  ModelStateStore({ModelState? initialState}) {
+    if (initialState != null) {
+      _stateController.add(initialState);
+    }
+  }
+
   void updateState(ModelState Function(ModelState) producer) {
     final currentState = _stateController.valueOrNull;
 

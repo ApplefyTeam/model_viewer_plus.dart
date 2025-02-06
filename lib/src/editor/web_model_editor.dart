@@ -30,6 +30,10 @@ class WebModelEditor {
       setBackgroundColorJS(bgColorHex);
     }
 
+    if (state.layers.isEmpty){
+      return;
+    }
+
     final JSArray jsLayers = convertLayersToJSArray(state.layers);
 
     print("🚀 Sending layers to JS...");
