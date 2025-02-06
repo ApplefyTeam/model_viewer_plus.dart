@@ -16,8 +16,6 @@
 
 <script>
 
-
-
     /* --------------------- MULTI-LAYER STATE --------------------- */
 
     let backgroundColor = "#ffffff";
@@ -141,32 +139,42 @@
         exportCanvasTexture();
     };
 
-    /* ------------------------- TEXT LAYER ------------------------- */
     function drawTextLayer(layer, ctx, canvas) {
         ctx.save();
 
+        // Convert layer position to scaled canvas position
         const posX = (layer.x || 0) * (canvas.width / 512);
         const posY = (layer.y || 0) * (canvas.height / 512);
 
+        // Set font before measuring text width
+        const baseFontSize = layer.fontSize || 24;
+        const adjustedFontSize = baseFontSize * (canvas.width / 512);
+        ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
+
+        // Measure text width to properly center it
+        const textMetrics = ctx.measureText(layer.content);
+        const textWidth = textMetrics.width;
+
+        // Apply translation with text width compensation
         ctx.translate(
-            posX + 35 * (canvas.width / 512),
+            posX + 35 * (canvas.width / 512) + textWidth / 2,  // ✅ Adjusted X position
             posY + 86 * (canvas.height / 512)
         );
 
-        ctx.scale(1, -1); // Flip vertically (as per original logic)
+        ctx.scale(1, -1); // Flip vertically
         ctx.rotate((layer.rotation || 0) * Math.PI / 180);
 
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
-        ctx.font = `${(layer.fontSize || 24) * 2}px Arial, sans-serif`; // Scale font size
         ctx.fillStyle = layer.color || textColorDefault;
 
-        console.log(`📝 Drawing text "${layer.content}" at (${posX}, ${posY})`);
+        console.log(`📝 Drawing text "${layer.content}" at (${posX}, ${posY}) with width ${textWidth}`);
 
         ctx.fillText(layer.content, 0, 0);
         ctx.restore();
     }
+
 
     /* ------------------------- IMAGE LAYER ------------------------- */
     function drawImageLayer(layer, ctx, canvas) {
