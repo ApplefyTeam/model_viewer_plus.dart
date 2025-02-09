@@ -97,7 +97,7 @@
         canvas.height = canvasSize;
         const ctx = canvas.getContext("2d");
         // Example upscaling factor:
-        ctx.scale(2, 2);
+        // ctx.scale(2, 2);
         console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
     }
 
@@ -130,6 +130,11 @@
             } else {
                 console.warn(`⚠️ Unknown layer type: ${layer.type}`);
             }
+
+
+            if (layer.selected) {
+                drawSelectionControls(layer, ctx, canvas);
+            }
         });
 
         console.log("🔄 Updating canvas texture...");
@@ -141,39 +146,37 @@
 
     function drawTextLayer(layer, ctx, canvas) {
         ctx.save();
+        const scaleFactor = (canvas.width / 2) / 512;  // e.g. 2
+        const posX = (layer.x || 0) * scaleFactor;
+        const posY = (layer.y || 0) * scaleFactor;
 
-        // Convert layer position to scaled canvas position
-        const posX = (layer.x || 0) * (canvas.width / 512);
-        const posY = (layer.y || 0) * (canvas.height / 512);
-
-        // Set font before measuring text width
         const baseFontSize = layer.fontSize || 24;
-        const adjustedFontSize = baseFontSize * (canvas.width / 512);
+        const adjustedFontSize = baseFontSize * scaleFactor;
         ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
 
-        // Measure text width to properly center it
+        // measureText returns unscaled width.
         const textMetrics = ctx.measureText(layer.content);
-        const textWidth = textMetrics.width;
+        // Adjust the measured width by the scale factor
+        const textWidth = textMetrics.width * scaleFactor;
+        const textHeight = adjustedFontSize * 1.2; // already in scaled units
 
-        // Apply translation with text width compensation
+        // Translate to the center of the text bounding box.
         ctx.translate(
-            posX + 35 * (canvas.width / 512) + textWidth / 2,  // ✅ Adjusted X position
-            posY + 86 * (canvas.height / 512)
+            posX + 35 * scaleFactor + textWidth / 2,
+            posY + 86 * scaleFactor + textHeight / 2
         );
 
         ctx.scale(1, -1); // Flip vertically
         ctx.rotate((layer.rotation || 0) * Math.PI / 180);
 
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
         ctx.fillStyle = layer.color || textColorDefault;
-
-        console.log(`📝 Drawing text "${layer.content}" at (${posX}, ${posY}) with width ${textWidth}`);
 
         ctx.fillText(layer.content, 0, 0);
         ctx.restore();
     }
+
 
 
     /* ------------------------- IMAGE LAYER ------------------------- */
@@ -214,6 +217,98 @@
 
         image.src = layer.content; // Image URL or base64
     }
+    function drawSelectionControls(layer, ctx, canvas) {
+        ctx.save();
+
+        const scaleFactor = (canvas.width / 2) / 512;
+        const posX = (layer.x || 0) * scaleFactor;
+        const posY = (layer.y || 0) * scaleFactor;
+        const btnSize = 12;
+
+        let width, height;
+        if (layer.type === "text") {
+            const baseFontSize = layer.fontSize || 24;
+            const adjustedFontSize = baseFontSize * scaleFactor;
+            ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
+            const textMetrics = ctx.measureText(layer.content || "Text");
+            // Adjust measured width
+            width = textMetrics.width * scaleFactor;
+            height = adjustedFontSize * 1.2;
+        } else if (layer.type === "image") {
+            width = layer.imageWidth || 100;
+            height = layer.imageHeight || 50;
+        }
+
+        ctx.translate(
+            posX + 35 * scaleFactor + width / 2,
+            posY + 86 * scaleFactor + height / 2
+        );
+
+        ctx.scale(1, -1);
+        ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-width / 2, -height / 2, width, height);
+
+        // 6️⃣ Draw Control Buttons
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
+
+        drawControlButton(ctx, -halfWidth, -halfHeight, btnSize, "1", "rotate", layer.id);
+        drawControlButton(ctx, halfWidth, -halfHeight, btnSize, "2", "delete", layer.id);
+        drawControlButton(ctx, -halfWidth, halfHeight, btnSize, "3", "resize", layer.id);
+        drawControlButton(ctx, halfWidth, halfHeight, btnSize, "4", "move", layer.id);
+
+        ctx.restore();
+    }
+    function drawControlButton(ctx, x, y, size, label, type, layerId) {
+        ctx.save();
+
+        // **DO NOT Flip Again** (It was already flipped in `drawSelectionControls`)
+        ctx.translate(x, y); // Correct for position
+
+        // **Draw button shape**
+        ctx.beginPath();
+        ctx.arc(0, 0, size / 2, 0, 2 * Math.PI);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.stroke();
+
+        // **Draw text/icon correctly**
+        ctx.fillStyle = "black";
+        ctx.font = `${size}px Arial, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, 0, 0);
+
+        // **Store button for click detection**
+        if (!window.controlButtons) {
+            window.controlButtons = [];
+        }
+        window.controlButtons.push({ x, y, size, type, layerId });
+
+        ctx.restore(); // Restore context after drawing
+    }
+
+    window.addEventListener("mousedown", function (event) {
+        const rect = getCanvasTexture()?.source.element.getBoundingClientRect();
+        const clickX = event.clientX - rect.left;
+        const clickY = event.clientY - rect.top;
+
+        layers.forEach(layer => {
+            if (layer.selected) {
+                const controls = getControlButtonPositions(layer, canvas);
+                controls.forEach(control => {
+                    if (isPointInsideCircle(clickX, clickY, control.x, control.y, control.size)) {
+                        console.log(`✅ Clicked on ${control.type} control for layer ${layer.id}`);
+                        triggerControlAction(layer, control.type);
+                    }
+                });
+            }
+        });
+    });
+
 
     /* ------------------------- FORCE TEXTURE UPDATE ------------------------- */
     function forceTextureUpdate() {

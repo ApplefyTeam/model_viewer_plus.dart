@@ -86,6 +86,7 @@ class WebModelEditor {
       "imageWidth": layer.imageWidth,
       "imageHeight": layer.imageHeight,
       "visible": layer.visible,
+      "selected": layer.selected,
     };
   }
 
@@ -109,6 +110,7 @@ class WebModelEditor {
         color: const Color(0xFF0000FF),
         // Blue
         visible: true,
+        selected: true,
       ),
       Layer(
         id: "test_image_layer",
@@ -127,6 +129,7 @@ class WebModelEditor {
         imageWidth: 150,
         imageHeight: 150,
         visible: true,
+        selected: false
       ),
     ];
 

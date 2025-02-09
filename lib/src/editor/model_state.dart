@@ -15,7 +15,8 @@ class Layer {
     this.color,
     this.imageWidth,
     this.imageHeight,
-    this.visible = true
+    this.visible = true,
+    this.selected = false,
   });
 
   final String id; // Unique id for the layer
@@ -31,6 +32,7 @@ class Layer {
   final double? imageWidth; // added to store original width
   final double? imageHeight; // added to store original height
   bool visible; // for layer visibility
+  bool selected;
 
   Layer copyWith({String? id,
     LayerType? type,
@@ -44,7 +46,8 @@ class Layer {
     Color? color,
     double? imageWidth,
     double? imageHeight,
-    bool? visible}) =>
+    bool? visible,
+    bool? selected}) =>
       Layer(
           id: id ?? this.id,
           type: type ?? this.type,
@@ -58,7 +61,8 @@ class Layer {
           color: color ?? this.color,
           imageWidth: imageWidth ?? this.imageWidth,
           imageHeight: imageHeight ?? this.imageHeight,
-          visible: visible ?? this.visible
+          visible: visible ?? this.visible,
+          selected: selected ?? this.selected
       );
 }
 
