@@ -9,6 +9,7 @@
       -webkit-touch-callout: none;
       user-select: none;
       -webkit-user-select: none;
+      cursor: default;
     }
 </style>
 <script type="module" src="model-viewer.min.js" defer></script>
@@ -255,13 +256,14 @@
         const halfWidth = width / 2;
         const halfHeight = height / 2;
 
-        drawControlButton(ctx, -halfWidth, -halfHeight, btnSize, "1", "rotate", layer.id);
-        drawControlButton(ctx, halfWidth, -halfHeight, btnSize, "2", "delete", layer.id);
-        drawControlButton(ctx, -halfWidth, halfHeight, btnSize, "3", "resize", layer.id);
-        drawControlButton(ctx, halfWidth, halfHeight, btnSize, "4", "move", layer.id);
+drawControlButton(ctx, -halfWidth, -halfHeight, btnSize, "🔄", "rotate", layer.id);
+drawControlButton(ctx, halfWidth, -halfHeight, btnSize, "❌", "delete", layer.id);
+drawControlButton(ctx, -halfWidth, halfHeight, btnSize, "↔️", "resize", layer.id);
+drawControlButton(ctx, halfWidth, halfHeight, btnSize, "✋", "move", layer.id);
 
         ctx.restore();
     }
+
     function drawControlButton(ctx, x, y, size, label, type, layerId) {
         ctx.save();
 
@@ -291,23 +293,66 @@
         ctx.restore(); // Restore context after drawing
     }
 
-    window.addEventListener("mousedown", function (event) {
-        const rect = getCanvasTexture()?.source.element.getBoundingClientRect();
-        const clickX = event.clientX - rect.left;
-        const clickY = event.clientY - rect.top;
+    function isPointInsideCircle(px, py, cx, cy, radius) {
+        const dx = px - cx;
+        const dy = py - cy;
+        return (dx * dx + dy * dy) <= (radius * radius);
+    }
 
-        layers.forEach(layer => {
-            if (layer.selected) {
-                const controls = getControlButtonPositions(layer, canvas);
-                controls.forEach(control => {
-                    if (isPointInsideCircle(clickX, clickY, control.x, control.y, control.size)) {
-                        console.log(`✅ Clicked on ${control.type} control for layer ${layer.id}`);
-                        triggerControlAction(layer, control.type);
-                    }
-                });
+    function handleControlButtonClick(event) {
+    // Prevent default behaviors (like scrolling on touch)
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Get the canvas element and its bounding rectangle
+    const canvas = getCanvasTexture()?.source.element;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+
+    let pointerX, pointerY;
+    if (event.touches && event.touches.length > 0) {
+        // Use first touch point for touch events
+        pointerX = event.touches[0].clientX - rect.left;
+        pointerY = event.touches[0].clientY - rect.top;
+    } else {
+        // For mouse events
+        pointerX = event.clientX - rect.left;
+        pointerY = event.clientY - rect.top;
+    }
+
+    // Loop through stored control buttons (for the currently rendered frame)
+    if (window.controlButtons && window.controlButtons.length > 0) {
+        for (let i = 0; i < window.controlButtons.length; i++) {
+            const btn = window.controlButtons[i];
+            // btn.x and btn.y are the center of the button.
+            if (isPointInsideCircle(pointerX, pointerY, btn.x, btn.y, btn.size / 2)) {
+                console.log(`Clicked on ${btn.type} control for layer ${btn.layerId}`);
+                // Trigger the corresponding action.
+                // For now, we call a generic function:
+                triggerControlAction(btn.layerId, btn.type);
+                // Optionally, break after the first detected button
+                break;
             }
-        });
-    });
+        }
+    }
+}
+
+function triggerControlAction(layerId, controlType) {
+    if (controlType === "delete") {
+        console.log(`Deleting layer ${layerId}`);
+        // Send delete action to Flutter, etc.
+    } else if (controlType === "rotate") {
+        console.log(`Initiating rotation for layer ${layerId}`);
+        // Start rotation interaction logic.
+    } else if (controlType === "resize") {
+        console.log(`Initiating resize for layer ${layerId}`);
+        // Start resize interaction logic.
+    } else if (controlType === "move") {
+        console.log(`Initiating move for layer ${layerId}`);
+        // Start move interaction logic.
+    }
+    // Additional handling as needed...
+}
 
 
     /* ------------------------- FORCE TEXTURE UPDATE ------------------------- */
@@ -486,27 +531,48 @@
         reader.readAsDataURL(file);
     }
 
-    // Additional listeners for disabling context menu, selection, etc.
-    document.addEventListener('DOMContentLoaded', () => {
-        document.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
-        });
-
-        document.addEventListener('selectstart', (event) => {
-            event.preventDefault();
-        });
-
-        console.log("⚡ DOMContentLoaded event fired!");
-
-        customElements.whenDefined('model-viewer').then(() => {
-            console.log("✅ model-viewer component is ready!");
-            tryInitialize();
-        }).catch(error => {
-            console.error("❌ model-viewer failed to initialize:", error);
-        });
-
-        document.body.style.setProperty('-webkit-touch-callout', 'none');
+function initApp() {
+    // Disable context menu and text selection
+    document.addEventListener('contextmenu', (event) => {
+        console.log("contextmenu prevented");
+        event.preventDefault();
     });
+    document.addEventListener('selectstart', (event) => {
+        console.log("selectstart prevented");
+        event.preventDefault();
+    });
+
+    console.log("⚡ DOMContentLoaded (or already ready) event fired!");
+
+    // Wait until the <model-viewer> component is defined.
+    customElements.whenDefined('model-viewer').then(() => {
+        console.log("✅ model-viewer component is ready!");
+        tryInitialize();
+
+        // After initialization, attach the canvas event listeners.
+        // (Assuming that tryInitialize() or some subsequent code creates your canvas.)
+        const canvasElement = getCanvasTexture()?.source.element;
+        if (canvasElement) {
+            // Attach mouse and touch event listeners for control button interactions.
+            canvasElement.addEventListener("mousedown", handleControlButtonClick);
+            canvasElement.addEventListener("touchstart", handleControlButtonClick);
+            console.log("Control button event listeners attached.");
+        } else {
+            console.error("Canvas element not found. Could not attach event listeners.");
+        }
+    }).catch(error => {
+        console.error("❌ model-viewer failed to initialize:", error);
+    });
+
+    document.body.style.setProperty('-webkit-touch-callout', 'none');
+}
+
+// Check if the DOM is already loaded
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initApp);
+} else {
+    initApp();
+}
 
     tryInitialize();
 
