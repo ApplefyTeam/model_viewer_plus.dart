@@ -48,7 +48,7 @@ class WebModelEditor {
     setBackgroundColorJS(hexColor);
   }
 
-  void export() => addTestLayers();
+  void export() => exportGLB();
 
   void save() => saveGLB();
 

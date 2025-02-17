@@ -383,18 +383,6 @@ function triggerControlAction(layerId, controlType) {
         link.click();
     }
 
-    window.setBackgroundColorJS = (color) => {
-        if (!color) {
-            console.warn("⚠️ Invalid background color received:", color);
-        }
-        if (backgroundColor !== color) {
-            backgroundColor = color;
-            console.log("✅ Background Color Set to: -->" + color + "<--");
-        } else {
-            console.log("⚠️ Skipping redundant background update.");
-        }
-    }
-
     /* -------------- MODEL EVENT HANDLERS -------------- */
     function onModelLoadStarted() {
         try {
@@ -433,6 +421,18 @@ function triggerControlAction(layerId, controlType) {
             }
         } catch (error) {
             console.error('Error in onModelLoaded:', error);
+        }
+    }
+
+     window.setBackgroundColorJS = (color) => {
+        if (!color) {
+            console.warn("⚠️ Invalid background color received:", color);
+        }
+        if (backgroundColor !== color) {
+            backgroundColor = color;
+            console.log("✅ Background Color Set to: -->" + color + "<--");
+        } else {
+            console.log("⚠️ Skipping redundant background update.");
         }
     }
 
