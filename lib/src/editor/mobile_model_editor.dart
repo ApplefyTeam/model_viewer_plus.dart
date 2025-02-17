@@ -20,15 +20,14 @@ class MobileModelEditor {
       final bgHex = state.backgroundColor?.toHex() ?? "#ffffff";
       print("🎨 [MobileModelEditor] Setting background color: $bgHex");
 
-      final bgColorResult = await _controller.runJavaScriptReturningResult(
-        'setBackgroundColorJS("$bgHex");',
-      );
-      print("✅ [MobileModelEditor] Background color result: $bgColorResult");
+      // ✅ Use `runJavaScript()` because `setBackgroundColorJS` does not return a value
+      await _controller.runJavaScript('setBackgroundColorJS("$bgHex");');
+      print("✅ [MobileModelEditor] Background color applied.");
 
       // 2. **Clear Existing Layers**
       print("🗑️ [MobileModelEditor] Clearing existing layers...");
-      final clearResult = await _controller.runJavaScriptReturningResult('layers = [];');
-      print("✅ [MobileModelEditor] Layer clearing result: $clearResult");
+      await _controller.runJavaScript('layers = [];');
+      print("✅ [MobileModelEditor] Layer clearing complete.");
 
       // 3. **Re-add Layers**
       for (final layer in state.layers) {
@@ -54,26 +53,25 @@ class MobileModelEditor {
         print("📌 Image Width: $imageWidthValue, Image Height: $imageHeightValue");
 
         final jsAddLayer = """
-          addLayer("$typeString", "$contentString", {
-            order: $orderValue,
-            x: $xValue,
-            y: $yValue,
-            rotation: $rotationValue,
-            scale: $scaleValue,
-            fontSize: $fontSizeValue,
-            color: "$colorHex",
-            imageWidth: $imageWidthValue,
-            imageHeight: $imageHeightValue
-          });
-        """;
+        addLayer("$typeString", "$contentString", {
+          order: $orderValue,
+          x: $xValue,
+          y: $yValue,
+          rotation: $rotationValue,
+          scale: $scaleValue,
+          fontSize: $fontSizeValue,
+          color: "$colorHex",
+          imageWidth: $imageWidthValue,
+          imageHeight: $imageHeightValue
+        });
+      """;
 
-        // Run JavaScript to add this layer and log result
-        final layerResult = await _controller.runJavaScriptReturningResult(jsAddLayer);
-        print("✅ [MobileModelEditor] Layer added result: $layerResult");
+        // ✅ Use `runJavaScript()` since `addLayer()` does not return a value
+        await _controller.runJavaScript(jsAddLayer);
+        print("✅ [MobileModelEditor] Layer added.");
       }
 
       print("🎉 [MobileModelEditor] State update complete!");
-
     } catch (e) {
       print("🚨 [MobileModelEditor] JavaScript execution error: $e");
     }
