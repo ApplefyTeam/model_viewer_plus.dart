@@ -384,6 +384,10 @@ function triggerControlAction(layerId, controlType) {
     }
 
     /* -------------- MODEL EVENT HANDLERS -------------- */
+  window.ModelLoaded = window.ModelLoaded || {};
+  window.ModelLoadStarted = window.ModelLoadStarted || {};
+  window.ModelSaved = window.ModelSaved || {};
+
     function onModelLoadStarted() {
         try {
             // For mobile platforms
