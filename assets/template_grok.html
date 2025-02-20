@@ -303,74 +303,119 @@ function isPointInsideCircle(px, py, cx, cy, radius) {
 }
 
 function handleControlButtonClick(event) {
-    // Prevent default behaviors (like scrolling on touch)
     event.preventDefault();
     event.stopPropagation();
 
-    console.log("🖱️ Click detected on canvas!");
-
-    // Get the canvas element and its bounding rectangle
     const canvas = getCanvasTexture()?.source.element;
     if (!canvas) {
-        console.error("🚨 Canvas element not found!");
+        console.error("🚨 Canvas not found for click detection");
         return;
     }
     const rect = canvas.getBoundingClientRect();
 
     let pointerX, pointerY;
     if (event.touches && event.touches.length > 0) {
-        // Use first touch point for touch events
         pointerX = event.touches[0].clientX - rect.left;
         pointerY = event.touches[0].clientY - rect.top;
+        console.log(`👇 Touch detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
     } else {
-        // For mouse events
         pointerX = event.clientX - rect.left;
         pointerY = event.clientY - rect.top;
+        console.log(`🖱️ Click detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
     }
 
-    console.log(`📍 Click Position: (${pointerX}, ${pointerY})`);
-
-    // Loop through stored control buttons
     if (window.controlButtons && window.controlButtons.length > 0) {
         for (let i = 0; i < window.controlButtons.length; i++) {
             const btn = window.controlButtons[i];
-
             if (isPointInsideCircle(pointerX, pointerY, btn.x, btn.y, btn.size / 2)) {
-                console.log(`✅ Clicked ${btn.type.toUpperCase()} button for layer ${btn.layerId}`);
-
-                // Call the action handler
+                console.log(`✅ Hit control button: ${btn.type} for layer ${btn.layerId} at (${btn.x.toFixed(2)}, ${btn.y.toFixed(2)})`);
                 triggerControlAction(btn.layerId, btn.type);
-
-                // Stop checking once we find the first valid button
-                break;
+                break; // Stop after first hit
             }
         }
     } else {
-        console.warn("⚠️ No control buttons detected.");
+        console.log("ℹ️ No control buttons to check");
     }
 }
-
 
 function triggerControlAction(layerId, controlType) {
-    console.log(`🚀 Action Triggered: ${controlType.toUpperCase()} on Layer: ${layerId}`);
+    console.log(`🎬 Triggering action: ${controlType} for layer ${layerId}`);
+    const actionData = { layerId, action: controlType };
 
     if (controlType === "delete") {
-        console.log(`🗑 Deleting layer ${layerId}`);
-        // Here, send event to Flutter or remove the layer
+        console.log(`🗑️ Delete action initiated for layer ${layerId}`);
+        notifyFlutter(actionData);
     } else if (controlType === "rotate") {
-        console.log(`🔄 Rotating layer ${layerId}`);
-        // Implement rotation interaction
+        console.log(`🔄 Rotate action initiated for layer ${layerId}`);
+        notifyFlutter(actionData);
+        // TODO: Start rotation flow (e.g., track mouse/touch movement)
     } else if (controlType === "resize") {
-        console.log(`📏 Resizing layer ${layerId}`);
-        // Implement resize interaction
+        console.log(`📏 Resize action initiated for layer ${layerId}`);
+        notifyFlutter(actionData);
+        // TODO: Start resize flow
     } else if (controlType === "move") {
-        console.log(`✋ Moving layer ${layerId}`);
-        // Implement move interaction
-    } else {
-        console.warn(`⚠️ Unknown action: ${controlType}`);
+        console.log(`✋ Move action initiated for layer ${layerId}`);
+        notifyFlutter(actionData);
+        // TODO: Start move flow
     }
 }
 
+function notifyFlutter(data) {
+    if (typeof ControlAction !== 'undefined' && ControlAction.postMessage) {
+        console.log(`📤 Sending to Flutter: ${JSON.stringify(data)}`);
+        ControlAction.postMessage(JSON.stringify(data));
+    } else {
+        console.warn("⚠️ ControlAction channel not defined, cannot notify Flutter");
+    }
+}
+
+function setupControlClickListener() {
+    const modelViewer = getModelViewer();
+    if (!modelViewer) {
+        console.error("🚨 Model viewer not found for click setup");
+        return;
+    }
+
+    modelViewer.addEventListener('click', (event) => {
+        const uv = modelViewer.positionAndNormalFromPoint(event.clientX, event.clientY)?.uv;
+        if (!uv) {
+            console.log("ℹ️ Click outside model");
+            return;
+        }
+
+        const canvas = getCanvasTexture()?.source.element;
+        if (!canvas) return;
+
+        // Convert UV to canvas coordinates
+        const canvasX = uv.x * canvas.width;
+        const canvasY = (1 - uv.y) * canvas.height; // Flip y-axis
+        console.log(`🌐 UV (${uv.x.toFixed(2)}, ${uv.y.toFixed(2)}) mapped to canvas (${canvasX.toFixed(2)}, ${canvasY.toFixed(2)})`);
+
+        // Simulate a click event on the canvas
+        handleControlButtonClick({
+            clientX: event.clientX,
+            clientY: event.clientY,
+            preventDefault: event.preventDefault.bind(event),
+            stopPropagation: event.stopPropagation.bind(event)
+        });
+    });
+
+    // Add touch support
+    modelViewer.addEventListener('touchstart', (event) => {
+        handleControlButtonClick({
+            touches: event.touches,
+            preventDefault: event.preventDefault.bind(event),
+            stopPropagation: event.stopPropagation.bind(event)
+        });
+    });
+}
+
+// Call this after model loads or during initialization
+const modelViewer = getModelViewer();
+modelViewer.addEventListener('load', () => {
+    console.log("🚀 Setting up control click listener");
+    setupControlClickListener();
+});
 
 
 /* ------------------------- FORCE TEXTURE UPDATE ------------------------- */
