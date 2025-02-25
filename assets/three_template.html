@@ -156,6 +156,9 @@
         window.addEventListener("resize", onWindowResize, false);
         setupCanvasClickListener();
 
+        // Set up mouse rotation
+        setupMouseRotation();
+
         animate();
     }
 
@@ -244,7 +247,7 @@
     function animate() {
         requestAnimationFrame(animate);
         if (model) {
-            model.rotation.y += 0.005;
+            // model.rotation.y += 0.005; // Disabled automatic rotation
         }
         renderer.render(scene, camera);
     }
@@ -531,6 +534,40 @@
 
         document.documentElement.addEventListener('click', (event) => {
             console.log(`📜 Document click detected at: ${event.clientX}x${event.clientY}`);
+        });
+    }
+
+    // Function to set up mouse rotation
+    function setupMouseRotation() {
+        const canvas = renderer.domElement;
+        let isDragging = false;
+        let previousMouseX = 0;
+        let rotationY = 0; // Track Y rotation
+
+        canvas.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            previousMouseX = event.clientX;
+            console.log("🖱️ Mouse down at:", event.clientX);
+        });
+
+        canvas.addEventListener('mousemove', (event) => {
+            if (isDragging && model) {
+                const deltaX = event.clientX - previousMouseX;
+                rotationY += deltaX * 0.004; 
+                model.rotation.y = rotationY;
+                previousMouseX = event.clientX;
+                console.log("🔄 Mouse drag, new rotation Y:", rotationY);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isDragging = false;
+            console.log("🖱️ Mouse up");
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isDragging = false;
+            console.log("🖱️ Mouse left canvas");
         });
     }
 
