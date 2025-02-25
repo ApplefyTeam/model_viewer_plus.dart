@@ -22,25 +22,25 @@ external void saveGLB();
 
 class WebModelEditor {
   void updateState(ModelState state) {
-    // print("🔄 Updating State with real layers...");
-    //
-    // if (state.backgroundColor != null) {
-    //   final String bgColorHex = state.backgroundColor!.toHex();
-    //   print("🎨 Setting background color to: $bgColorHex");
-    //   setBackgroundColorJS(bgColorHex);
-    // }
-    //
-    // if (state.layers.isEmpty){
-    //   // send empty array to clear the canvas
-    //   renderLayersJS(js_util.jsify([]));
-    // } else {
-    //   final JSArray jsLayers = convertLayersToJSArray(state.layers);
-    //
-    //   print("🚀 Sending layers to JS...");
-    //   renderLayersJS(jsLayers);
-    //
-    //   print("✅ State updated and sent to JavaScript.");
-    // }
+    print("🔄 Updating State with real layers...");
+
+    if (state.backgroundColor != null) {
+      final String bgColorHex = state.backgroundColor!.toHex();
+      print("🎨 Setting background color to: $bgColorHex");
+      setBackgroundColorJS(bgColorHex);
+    }
+
+    if (state.layers.isEmpty){
+      // send empty array to clear the canvas
+      renderLayersJS(js_util.jsify([]));
+    } else {
+      final JSArray jsLayers = convertLayersToJSArray(state.layers);
+
+      print("🚀 Sending layers to JS...");
+      renderLayersJS(jsLayers);
+
+      print("✅ State updated and sent to JavaScript.");
+    }
   }
 
   void setCanvasBackgroundColor(String? hexColor) {

@@ -52,6 +52,8 @@ class ModelViewerState extends State<ModelViewer> {
         ..style.height = '100%'
         // ignore: avoid_dynamic_calls
         ..style.width = '100%'
+        ..style.pointerEvents = 'none' // Disable on root
+        ..style.zIndex = '0'
         ..setInnerHtml(html, validator: validator),
     );
 
