@@ -57,6 +57,7 @@
     console.log("📌 Starting script injection...");
 
     function loadGLTFLoader() {
+        onModelLoadStarted()
         if (typeof THREE === "undefined") {
             console.error("🚨 THREE.js still undefined! Aborting GLTFLoader.");
             return;
@@ -302,7 +303,8 @@
                 console.warn(`⚠️ Unknown layer type: ${layer.type}`);
             }
 
-            if (layer.selected) {
+            // if (layer.selected) {
+            if (true) {
                 drawSelectionControls(layer, ctx, canvas);
             }
         });
@@ -390,8 +392,7 @@
 
     function drawSelectionControls(layer, ctx, canvas) {
         ctx.save();
-        const modelScale = model.scale.x;
-        const scaleFactor = (canvas.width / 2) / (512 * modelScale);
+        const scaleFactor = (canvas.width / 2) / (512 * window.devicePixelRatio);
         const posX = (layer.x || 0) * scaleFactor;
         const posY = (layer.y || 0) * scaleFactor;
         const btnSize = 12 * scaleFactor;
@@ -409,87 +410,170 @@
             height = (layer.imageHeight || 50) * scaleFactor;
         }
 
-        ctx.translate(
-            posX + 35 * scaleFactor + width / 2,
-            posY + 86 * scaleFactor + height / 2
-        );
+        // Calculate the center position of the layer
+        const centerX = posX + 35 * scaleFactor + width / 2;
+        const centerY = posY + 86 * scaleFactor + height / 2;
 
+        ctx.translate(centerX, centerY);
         ctx.scale(1, -1);
         ctx.rotate((layer.rotation || 0) * Math.PI / 180);
 
-        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        // Draw the selection rectangle on the canvas
+        ctx.strokeStyle = "rgba(0, 120, 255, 0.8)";
         ctx.lineWidth = 2;
         ctx.strokeRect(-width / 2, -height / 2, width, height);
 
         const halfWidth = width / 2;
         const halfHeight = height / 2;
 
-        drawControlButton(ctx, -halfWidth, -halfHeight, btnSize, "🔄", "rotate", layer.id);
-        drawControlButton(ctx, halfWidth, -halfHeight, btnSize, "❌", "delete", layer.id);
-        drawControlButton(ctx, -halfWidth, halfHeight, btnSize, "↔️", "resize", layer.id);
-        drawControlButton(ctx, halfWidth, halfHeight, btnSize, "✋", "move", layer.id);
+        // Draw the control buttons directly on the canvas
+        // This ensures they are visible and properly aligned with the layer
+        drawControlButton(ctx, -halfWidth - btnSize / 2, -halfHeight - btnSize / 2, btnSize, "🔄", "rotate");
+        drawControlButton(ctx, halfWidth + btnSize / 2, -halfHeight - btnSize / 2, btnSize, "❌", "delete");
+        drawControlButton(ctx, -halfWidth - btnSize / 2, halfHeight + btnSize / 2, btnSize, "↔️", "resize");
+        drawControlButton(ctx, halfWidth + btnSize / 2, halfHeight + btnSize / 2, btnSize, "✋", "move");
+
+        // Store control button hit areas for interaction
+        if (!window.controlAreas) {
+            window.controlAreas = [];
+        }
+
+        // Transform button positions back to world coordinates for hit detection
+        const layerRotation = (layer.rotation || 0) * Math.PI / 180;
+        const cos = Math.cos(layerRotation);
+        const sin = Math.sin(layerRotation);
+
+        // Helper function to rotate a point around the center
+        function rotatePoint(x, y) {
+            const rx = x * cos - y * sin;
+            const ry = x * sin + y * cos;
+            return {x: rx + centerX, y: ry * -1 + centerY}; // Apply inverse scale
+        }
+
+        // Store button areas with proper coordinates
+        const buttons = [
+            {pos: rotatePoint(-halfWidth - btnSize / 2, -halfHeight - btnSize / 2), type: "rotate"},
+            {pos: rotatePoint(halfWidth + btnSize / 2, -halfHeight - btnSize / 2), type: "delete"},
+            {pos: rotatePoint(-halfWidth - btnSize / 2, halfHeight + btnSize / 2), type: "resize"},
+            {pos: rotatePoint(halfWidth + btnSize / 2, halfHeight + btnSize / 2), type: "move"}
+        ];
+
+        buttons.forEach(button => {
+            window.controlAreas.push({
+                x: button.pos.x,
+                y: button.pos.y,
+                radius: btnSize,
+                type: button.type,
+                layerId: layer.id
+            });
+        });
 
         ctx.restore();
+
+        // Update texture since we've modified the canvas
+        getCanvasTexture().needsUpdate = true;
     }
 
-    function isPointInsideCircle(px, py, cx, cy, radius) {
-        const dx = px - cx;
-        const dy = py - cy;
-        return (dx * dx + dy * dy) <= (radius * radius);
+    function drawControlButton(ctx, x, y, size, label, type) {
+        // Draw circular button
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fillStyle = "white";
+        ctx.fill();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // Draw the label (emoji)
+        ctx.fillStyle = "black";
+        ctx.font = `${size}px Arial, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(label, x, y);
     }
 
+    // Replace the handleControlButtonClick function with this version
     function handleControlButtonClick(event) {
         event.preventDefault();
         event.stopPropagation();
 
-        const canvas = getCanvasTexture()?.image;
-        if (!canvas) {
-            console.error("🚨 Canvas not found for click detection");
+        if (!window.controlAreas || window.controlAreas.length === 0) {
+            console.log("ℹ️ No control areas defined");
             return;
         }
-        const rect = renderer.domElement.getBoundingClientRect();
 
+        const rect = renderer.domElement.getBoundingClientRect();
         let pointerX, pointerY;
+
         if (event.touches && event.touches.length > 0) {
             pointerX = event.touches[0].clientX - rect.left;
             pointerY = event.touches[0].clientY - rect.top;
-            console.log(`👇 Touch detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
         } else {
             pointerX = event.clientX - rect.left;
             pointerY = event.clientY - rect.top;
-            console.log(`🖱️ Click detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
         }
 
-        if (window.controlButtons && window.controlButtons.length > 0) {
-            for (let i = 0; i < window.controlButtons.length; i++) {
-                const btn = window.controlButtons[i];
-                if (isPointInsideCircle(pointerX, pointerY, btn.x, btn.y, btn.size / 2)) {
-                    console.log(`✅ Hit control button: ${btn.type} for layer ${btn.layerId} at (${btn.x.toFixed(2)}, ${btn.y.toFixed(2)})`);
-                    triggerControlAction(btn.layerId, btn.type);
-                    break;
+        // Convert from screen coordinates to texture coordinates
+        const canvas = getCanvasTexture().image;
+        const normalized = {
+            x: pointerX / renderer.domElement.clientWidth,
+            y: pointerY / renderer.domElement.clientHeight
+        };
+
+        // Perform raycasting to find intersection with the model
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2(
+            normalized.x * 2 - 1,
+            -(normalized.y * 2 - 1)
+        );
+
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObject(model, true);
+
+        if (intersects.length > 0) {
+            // Get the UV coordinates at the intersection point
+            const uv = intersects[0].uv;
+            if (!uv) {
+                console.log("No UV coordinates found at intersection");
+                return;
+            }
+
+            // Convert UV to texture coordinates
+            const textureX = uv.x * canvas.width;
+            const textureY = (1 - uv.y) * canvas.height;
+
+            console.log(`Intersection at texture coordinates: (${textureX.toFixed(2)}, ${textureY.toFixed(2)})`);
+
+            // Check if we hit any control buttons
+            for (const area of window.controlAreas) {
+                const dx = area.x - textureX;
+                const dy = area.y - textureY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance <= area.radius) {
+                    console.log(`✅ Hit control button: ${area.type} for layer ${area.layerId}`);
+                    triggerControlAction(area.layerId, area.type);
+                    return;
                 }
             }
-        } else {
-            console.log("ℹ️ No control buttons to check");
         }
     }
 
+    // Make sure this function exists
     function triggerControlAction(layerId, controlType) {
         console.log(`🎬 Triggering action: ${controlType} for layer ${layerId}`);
         const actionData = {layerId, action: controlType};
 
-        if (controlType === "delete") {
-            console.log(`🗑️ Delete action initiated for layer ${layerId}`);
-            notifyFlutter(actionData);
-        } else if (controlType === "rotate") {
-            console.log(`🔄 Rotate action initiated for layer ${layerId}`);
-            notifyFlutter(actionData);
-        } else if (controlType === "resize") {
-            console.log(`📏 Resize action initiated for layer ${layerId}`);
-            notifyFlutter(actionData);
-        } else if (controlType === "move") {
-            console.log(`✋ Move action initiated for layer ${layerId}`);
-            notifyFlutter(actionData);
+        if (window.ControlAction && window.ControlAction.postMessage) {
+            console.log(`📤 Sending to Flutter: ${JSON.stringify(actionData)}`);
+            window.ControlAction.postMessage(JSON.stringify(actionData));
+        } else {
+            console.warn("⚠️ ControlAction channel not defined, cannot notify Flutter");
+            // For debugging in browser, simulate the action
+            if (controlType === "delete") {
+                console.log(`🗑️ Delete action initiated for layer ${layerId}`);
+                // You could implement a local fallback here for testing
+            }
         }
     }
 
@@ -553,7 +637,7 @@
         canvas.addEventListener('mousemove', (event) => {
             if (isDragging && model) {
                 const deltaX = event.clientX - previousMouseX;
-                rotationY += deltaX * 0.004; 
+                rotationY += deltaX * 0.004;
                 model.rotation.y = rotationY;
                 previousMouseX = event.clientX;
                 console.log("🔄 Mouse drag, new rotation Y:", rotationY);
