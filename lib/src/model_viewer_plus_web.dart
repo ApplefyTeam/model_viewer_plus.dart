@@ -34,7 +34,7 @@ class ModelViewerState extends State<ModelViewer> {
   Future<void> generateModelViewerHtml() async {
     final htmlTemplate = await rootBundle
     // .loadString('packages/model_viewer_plus/assets/template.html');
-    //     .loadString('packages/model_viewer_plus/assets/template_grok.html');
+        // .loadString('packages/model_viewer_plus/assets/template_grok.html');
         .loadString('packages/model_viewer_plus/assets/three_template.html');
 
     // allow to use elements
