@@ -1,51 +1,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <style>
     body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-      position: relative;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+        position: relative;
     }
+
     #fake-layer-panel {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 280px;
-      height: 100%;
-      background: rgba(255, 0, 0, 0.1);
-      z-index: 10;
-      pointer-events: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 280px;
+        height: 100%;
+        background: rgba(255, 0, 0, 0.1);
+        z-index: 10;
+        pointer-events: auto;
     }
+
     #fake-top-toolbar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 60px;
-      background: rgba(0, 255, 0, 0.1);
-      z-index: 10;
-      pointer-events: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 60px;
+        background: rgba(0, 255, 0, 0.1);
+        z-index: 10;
+        pointer-events: auto;
     }
+
     #three-container {
-      position: absolute;
-      top: 60px;
-      left: 280px;
-      right: 0;
-      bottom: 0;
-      overflow: hidden;
-      z-index: 0;
-      pointer-events: auto;
+        position: absolute;
+        top: 60px;
+        left: 280px;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        z-index: 0;
+        pointer-events: auto;
     }
+
     canvas {
-      width: 100% !important;
-      height: 100% !important;
-      pointer-events: auto;
-      z-index: 0;
-      position: absolute;
-      top: 0;
-      left: 0;
+        width: 100% !important;
+        height: 100% !important;
+        pointer-events: auto;
+        z-index: 0;
+        position: absolute;
+        top: 0;
+        left: 0;
     }
 </style>
 
@@ -53,467 +57,481 @@
     console.log("📌 Starting script injection...");
 
     function loadGLTFLoader() {
-      if (typeof THREE === "undefined") {
-        console.error("🚨 THREE.js still undefined! Aborting GLTFLoader.");
-        return;
-      }
-      console.log("📥 Loading GLTFLoader...");
-      const loaderScript = document.createElement("script");
-      loaderScript.src = "https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js";
-      loaderScript.onload = () => {
-        console.log("✅ GLTFLoader Loaded Successfully!");
-        initApp();
-      };
-      loaderScript.onerror = () => {
-        console.error("🚨 Error loading GLTFLoader.js!");
-      };
-      document.head.appendChild(loaderScript);
+        if (typeof THREE === "undefined") {
+            console.error("🚨 THREE.js still undefined! Aborting GLTFLoader.");
+            return;
+        }
+        console.log("📥 Loading GLTFLoader...");
+        const loaderScript = document.createElement("script");
+        loaderScript.src = "https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js";
+        loaderScript.onload = () => {
+            console.log("✅ GLTFLoader Loaded Successfully!");
+            initApp();
+        };
+        loaderScript.onerror = () => {
+            console.error("🚨 Error loading GLTFLoader.js!");
+        };
+        document.head.appendChild(loaderScript);
     }
 
     if (typeof THREE === "undefined") {
-      console.log("📥 Loading THREE.js...");
-      const script = document.createElement("script");
-      script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
-      script.onload = () => {
-        console.log("✅ THREE.js Loaded Successfully!");
-        loadGLTFLoader();
-      };
-      script.onerror = () => {
-        console.error("🚨 Error loading THREE.js!");
-      };
-      document.head.appendChild(script);
+        console.log("📥 Loading THREE.js...");
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+        script.onload = () => {
+            console.log("✅ THREE.js Loaded Successfully!");
+            loadGLTFLoader();
+        };
+        script.onerror = () => {
+            console.error("🚨 Error loading THREE.js!");
+        };
+        document.head.appendChild(script);
     } else {
-      console.log("⚠️ THREE.js already loaded.");
-      loadGLTFLoader();
+        console.log("⚠️ THREE.js already loaded.");
+        loadGLTFLoader();
     }
 
     let scene, camera, renderer, model;
 
-  function initApp() {
-  console.log("⚡ Initializing Three.js App...");
-  if (typeof THREE === "undefined") {
-    console.error("❌ THREE.js not loaded, aborting initialization!");
-    return;
-  }
-  if (typeof THREE.GLTFLoader === "undefined") {
-    console.error("❌ GLTFLoader not loaded, aborting initialization!");
-    return;
-  }
-  console.log("✅ THREE.js and GLTFLoader confirmed loaded");
+    function initApp() {
+        console.log("⚡ Initializing Three.js App...");
+        if (typeof THREE === "undefined") {
+            console.error("❌ THREE.js not loaded, aborting initialization!");
+            return;
+        }
+        if (typeof THREE.GLTFLoader === "undefined") {
+            console.error("❌ GLTFLoader not loaded, aborting initialization!");
+            return;
+        }
+        console.log("✅ THREE.js and GLTFLoader confirmed loaded");
 
-  scene = new THREE.Scene();
-  console.log("📌 Scene created");
+        scene = new THREE.Scene();
+        console.log("📌 Scene created");
 
-  const layerPanel = document.createElement('div');
-  layerPanel.id = 'fake-layer-panel';
-  document.body.appendChild(layerPanel);
+        const layerPanel = document.createElement('div');
+        layerPanel.id = 'fake-layer-panel';
+        document.body.appendChild(layerPanel);
 
-  const topToolbar = document.createElement('div');
-  topToolbar.id = 'fake-top-toolbar';
-  document.body.appendChild(topToolbar);
+        const topToolbar = document.createElement('div');
+        topToolbar.id = 'fake-top-toolbar';
+        document.body.appendChild(topToolbar);
 
-  const container = document.createElement('div');
-  container.id = 'three-container';
-  document.body.appendChild(container);
-  container.style.width = `${window.innerWidth - 280}px`;
-  container.style.height = `${window.innerHeight - 60}px`;
-  console.log("Container created, initial size:", container.clientWidth, "x", container.clientHeight);
+        const container = document.createElement('div');
+        container.id = 'three-container';
+        document.body.appendChild(container);
+        container.style.width = `${window.innerWidth - 280}px`;
+        container.style.height = `${window.innerHeight - 60}px`;
+        console.log("Container created, initial size:", container.clientWidth, "x", container.clientHeight);
 
-  camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-  camera.position.set(0, 15, 35);
-  console.log("📷 Camera initialized:", camera.position);
+        camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 5, 10);
+        console.log("📷 Camera initialized:", camera.position);
 
-  renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(container.clientWidth, container.clientHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
-  renderer.setClearColor(0xaaaaaa, 1);
-  container.appendChild(renderer.domElement);
-  console.log("🖥️ Renderer created and attached to container, size:", container.clientWidth, "x", container.clientHeight);
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setClearColor(0xaaaaaa, 1);
+        container.appendChild(renderer.domElement);
+        console.log("🖥️ Renderer created and attached to container, size:", container.clientWidth, "x", container.clientHeight);
 
-  const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
-  hemiLight.position.set(0, 20, 0);
-  scene.add(hemiLight);
-  console.log("🌤️ Hemisphere Light Added (Intensity 1.5)");
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5);
+        hemiLight.position.set(0, 20, 0);
+        scene.add(hemiLight);
+        console.log("🌤️ Hemisphere Light Added (Intensity 1.5)");
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.set(0, 10, 10);
-  scene.add(directionalLight);
-  console.log("🔆 Soft Directional Light Added (Intensity 1)");
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(0, 10, 10);
+        scene.add(directionalLight);
+        console.log("🔆 Soft Directional Light Added (Intensity 1)");
 
-  loadGLTFModel("/assets/models/cloth.glb");
+        loadGLTFModel("assets/models/cloth.glb");
+        // loadGLTFModel("assets/models/oversized_t-shirt.glb");
 
-  window.addEventListener("resize", onWindowResize, false);
-  setupCanvasClickListener();
+        //   'assets/models/cloth.glb',
+        //   'assets/models/Tshirt_W_Set1.glb',
+        //   'assets/models/oversized_t-shirt.glb',
+        //   'assets/models/Hoodie_v3_Final.glb',
+        //   'assets/models/Tshirt_v2_Final.glb'
 
-  animate();
-}
+        window.addEventListener("resize", onWindowResize, false);
+        setupCanvasClickListener();
+
+        animate();
+    }
 
     function onWindowResize() {
-      const container = document.getElementById('three-container');
-      const width = container.clientWidth;
-      const height = container.clientHeight;
-      camera.aspect = width / height;
-      camera.updateProjectionMatrix();
-      renderer.setSize(width, height);
-      console.log("🔄 Window resized, renderer updated to:", width, "x", height);
+        const container = document.getElementById('three-container');
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height);
+        console.log("🔄 Window resized, renderer updated to:", width, "x", height);
     }
 
     function loadGLTFModel(url) {
-  console.log(`📥 Loading Model: ${url}`);
-  const loader = new THREE.GLTFLoader();
-  loader.load(
-    url,
-    (gltf) => {
-      model = gltf.scene;
-      model.position.set(0, 0, 0);
-      model.scale.set(1, 1, 1);
+        console.log(`📥 Loading Model: ${url}`);
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            url,
+            (gltf) => {
+                model = gltf.scene;
 
-      // Traverse to find the hoodie mesh and apply texture
-      model.traverse((child) => {
-        if (child.isMesh) {
-          console.log("Mesh material:", child.material.type, child.material, "Mesh name:", child.name);
-          // Assuming the hoodie has a MeshStandardMaterial or similar
-          if (child.material && child.material.isMaterial) {
-            // Create or modify material to use CanvasTexture
-            child.material = new THREE.MeshStandardMaterial({
-              map: getCanvasTexture(), // Use layer texture
-              side: THREE.DoubleSide,
-            });
-            child.material.needsUpdate = true;
-            console.log("🖼️ Applied layer texture to mesh:", child.name);
-          } else {
-            console.error("🚨 Mesh has no valid material:", child.name);
-          }
-        }
-      });
+                // Step 1: Calculate bounding box before scaling
+                const box = new THREE.Box3().setFromObject(model);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const originalHeight = size.y;
 
-      scene.add(model);
-      console.log("✅ Model loaded successfully:", model);
-      console.log("Model position: x=" + model.position.x + ", y=" + model.position.y + ", z=" + model.position.z);
-      console.log("Model scale: x=" + model.scale.x + ", y=" + model.scale.y + ", z=" + model.scale.z);
-      console.log("Model children:", model.children.length);
-      onModelLoaded();
-    },
-    (xhr) => {
-      console.log(`📡 Model loading progress: ${(xhr.loaded / xhr.total) * 100}%`);
-    },
-    (error) => {
-      console.error("🚨 Error loading model:", error.message || error);
+                // Define target height for all models
+                const targetHeight = 8; // Adjust based on desired size
+
+                // Scale model to match target height
+                const scale = targetHeight / originalHeight;
+                model.scale.set(scale, scale, scale);
+                console.log("🔍 Model scaled to height:", targetHeight, "with scale:", scale);
+
+                // Step 2: Recalculate bounding box after scaling
+                box.setFromObject(model);
+                const min = box.min;
+                const max = box.max;
+
+                // Align model's bottom at Y=0
+                const bottomY = min.y;
+                model.position.y -= bottomY;
+                console.log("🔍 Model bottom aligned at Y=0, new Y position:", model.position.y);
+
+                // Step 3: Center model horizontally (X and Z)
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                model.position.x -= center.x;
+                model.position.z -= center.z;
+                console.log("🔍 Model centered horizontally, new position:", model.position);
+
+                // Apply material and texture
+                model.traverse((child) => {
+                    if (child.isMesh) {
+                        console.log("Mesh material:", child.material.type, child.material, "Mesh name:", child.name);
+                        if (child.material && child.material.isMaterial) {
+                            child.material = new THREE.MeshStandardMaterial({
+                                map: getCanvasTexture(),
+                                side: THREE.DoubleSide,
+                            });
+                            child.material.needsUpdate = true;
+                            console.log("🖼️ Applied layer texture to mesh:", child.name);
+                        } else {
+                            console.error("🚨 Mesh has no valid material:", child.name);
+                        }
+                    }
+                });
+
+                scene.add(model);
+                console.log("✅ Model loaded successfully:", model);
+                console.log("Model position: x=" + model.position.x + ", y=" + model.position.y + ", z=" + model.position.z);
+                console.log("Model scale: x=" + model.scale.x + ", y=" + model.scale.y + ", z=" + model.scale.z);
+                console.log("Model children:", model.children.length);
+                onModelLoaded();
+            },
+            (xhr) => {
+                console.log(`📡 Model loading progress: ${(xhr.loaded / xhr.total) * 100}%`);
+            },
+            (error) => {
+                console.error("🚨 Error loading model:", error.message || error);
+            }
+        );
     }
-  );
-}
 
     function animate() {
-      requestAnimationFrame(animate);
-      if (model) {
-        model.rotation.y += 0.005;
-      }
-      renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+        if (model) {
+            model.rotation.y += 0.005;
+        }
+        renderer.render(scene, camera);
     }
 
     let backgroundColor = "#ffffff";
     let canvasTexture = null;
 
     function getCanvasTexture() {
-      if (!canvasTexture) {
-        console.log("Creating new canvas texture");
-        const canvas = document.createElement('canvas');
-        adjustCanvasResolution(canvas);
-        canvasTexture = new THREE.CanvasTexture(canvas);
-      }
-      return canvasTexture;
+        if (!canvasTexture) {
+            console.log("Creating new canvas texture");
+            const canvas = document.createElement('canvas');
+            adjustCanvasResolution(canvas);
+            canvasTexture = new THREE.CanvasTexture(canvas);
+        }
+        return canvasTexture;
     }
 
     function adjustCanvasResolution(canvas) {
-      const canvasSize = 1024;
-      canvas.width = canvasSize;
-      canvas.height = canvasSize;
-      const ctx = canvas.getContext("2d");
-      console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
+        const canvasSize = 1024 * window.devicePixelRatio;
+        canvas.width = canvasSize;
+        canvas.height = canvasSize;
+        const ctx = canvas.getContext("2d");
+        console.log(`Canvas size set to ${canvas.width}x${canvas.height}`);
     }
 
     window.renderLayersJS = function (layers) {
-  console.log("🖌️ Received layer data from Dart, rendering:", layers);
+        console.log("🖌️ Received layer data from Dart, rendering:", layers);
 
-  const texture = getCanvasTexture();
-  if (!texture) {
-    console.error("🚨 ERROR: Canvas texture not initialized!");
-    return;
-  }
+        const texture = getCanvasTexture();
+        if (!texture) {
+            console.error("🚨 ERROR: Canvas texture not initialized!");
+            return;
+        }
 
-  const canvas = texture.image;
-  const ctx = canvas.getContext('2d');
+        const canvas = texture.image;
+        const ctx = canvas.getContext('2d');
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = backgroundColor;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = backgroundColor;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  layers.forEach(layer => {
-    if (!layer.visible) {
-      console.log(`⏭️ Skipping hidden layer: ${layer.id}`);
-      return;
-    }
-    if (layer.type === "text") {
-      drawTextLayer(layer, ctx, canvas);
-    } else if (layer.type === "image") {
-      drawImageLayer(layer, ctx, canvas);
-    } else {
-      console.warn(`⚠️ Unknown layer type: ${layer.type}`);
-    }
+        layers.forEach(layer => {
+            if (!layer.visible) {
+                console.log(`⏭️ Skipping hidden layer: ${layer.id}`);
+                return;
+            }
+            if (layer.type === "text") {
+                drawTextLayer(layer, ctx, canvas);
+            } else if (layer.type === "image") {
+                drawImageLayer(layer, ctx, canvas);
+            } else {
+                console.warn(`⚠️ Unknown layer type: ${layer.type}`);
+            }
 
-    if (layer.selected) {
-      drawSelectionControls(layer, ctx, canvas);
-    }
-  });
+            if (layer.selected) {
+                drawSelectionControls(layer, ctx, canvas);
+            }
+        });
 
-  console.log("🔄 Updating Three.js canvas texture...");
-  texture.needsUpdate = true;
+        console.log("🔄 Updating Three.js canvas texture...");
+        texture.needsUpdate = true;
 
-  // Apply texture to model mesh
-  model?.traverse((child) => {
-    if (child.isMesh) {
-      if (child.material && child.material.isMaterial) {
-        child.material.map = texture;
-        child.material.needsUpdate = true;
-        console.log("🖼️ Layer texture applied to mesh:", child.name);
-      }
-    }
-  });
-};
+        // Apply texture to model mesh
+        model?.traverse((child) => {
+            if (child.isMesh) {
+                if (child.material && child.material.isMaterial) {
+                    child.material.map = texture;
+                    child.material.needsUpdate = true;
+                    console.log("🖼️ Layer texture applied to mesh:", child.name);
+                }
+            }
+        });
+    };
 
     function drawTextLayer(layer, ctx, canvas) {
-      ctx.save();
-      const scaleFactor = (canvas.width / 2) / 512;
-      const posX = (layer.x || 0) * scaleFactor;
-      const posY = (layer.y || 0) * scaleFactor;
-
-      const baseFontSize = layer.fontSize || 24;
-      const adjustedFontSize = baseFontSize * scaleFactor;
-      ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
-
-      const textMetrics = ctx.measureText(layer.content);
-      const textWidth = textMetrics.width * scaleFactor;
-      const textHeight = adjustedFontSize * 1.2;
-
-      ctx.translate(
-        posX + 35 * scaleFactor + textWidth / 2,
-        posY + 86 * scaleFactor + textHeight / 2
-      );
-
-      ctx.scale(1, -1);
-      ctx.rotate((layer.rotation || 0) * Math.PI / 180);
-
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = layer.color || "#000000";
-
-      ctx.fillText(layer.content, 0, 0);
-      ctx.restore();
-    }
-
-    function drawImageLayer(layer, ctx, canvas) {
-      console.log(`🖼️ Drawing Image: ${layer.content}`);
-      const image = new Image();
-      image.onload = function () {
         ctx.save();
-        const posX = (layer.x || 0) * (canvas.width / 512);
-        const posY = (layer.y || 0) * (canvas.height / 512);
+        const scaleFactor = (canvas.width / 2) / (512 * window.devicePixelRatio); // Adjust for model scale
+        const posX = (layer.x || 0) * scaleFactor;
+        const posY = (layer.y || 0) * scaleFactor;
+
+        const baseFontSize = layer.fontSize || 24;
+        const adjustedFontSize = baseFontSize * scaleFactor;
+        ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
+
+        const textMetrics = ctx.measureText(layer.content);
+        const textWidth = textMetrics.width * scaleFactor;
+        const textHeight = adjustedFontSize * 1.2;
 
         ctx.translate(
-          posX + 35 * (canvas.width / 512),
-          posY + 86 * (canvas.height / 512)
+            posX + 35 * scaleFactor + textWidth / 2,
+            posY + 86 * scaleFactor + textHeight / 2
         );
 
         ctx.scale(1, -1);
         ctx.rotate((layer.rotation || 0) * Math.PI / 180);
 
-        const imageWidth = layer.imageWidth || 100;
-        const imageHeight = layer.imageHeight || 100;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = layer.color || "#000000";
 
-        ctx.drawImage(image, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
-
-        console.log(`📍 Image drawn at (${posX}, ${posY})`);
+        ctx.fillText(layer.content, 0, 0);
         ctx.restore();
+    }
 
-        getCanvasTexture().needsUpdate = true;
-      };
+    function drawImageLayer(layer, ctx, canvas) {
+        console.log(`🖼️ Drawing Image: ${layer.content}`);
+        const scaleFactor = (canvas.width / 2) / (512 * window.devicePixelRatio); // Adjust for model scale
 
-      image.onerror = function () {
-        console.error(`🚨 ERROR: Could not load image: ${layer.content}`);
-      };
+        const image = new Image();
+        image.onload = function () {
+            ctx.save();
+            const posX = (layer.x || 0) * scaleFactor;
+            const posY = (layer.y || 0) * scaleFactor;
 
-      image.src = layer.content;
+            ctx.translate(
+                posX + 35 * scaleFactor,
+                posY + 86 * scaleFactor
+            );
+
+            ctx.scale(1, -1);
+            ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+
+            const imageWidth = (layer.imageWidth || 100) * scaleFactor;
+            const imageHeight = (layer.imageHeight || 100) * scaleFactor;
+
+            ctx.drawImage(image, -imageWidth / 2, -imageHeight / 2, imageWidth, imageHeight);
+
+            console.log(`📍 Image drawn at (${posX}, ${posY})`);
+            ctx.restore();
+
+            getCanvasTexture().needsUpdate = true;
+        };
+
+        image.onerror = function () {
+            console.error(`🚨 ERROR: Could not load image: ${layer.content}`);
+        };
+
+        image.src = layer.content;
     }
 
     function drawSelectionControls(layer, ctx, canvas) {
-      ctx.save();
-      const scaleFactor = (canvas.width / 2) / 512;
-      const posX = (layer.x || 0) * scaleFactor;
-      const posY = (layer.y || 0) * scaleFactor;
-      const btnSize = 12;
+        ctx.save();
+        const modelScale = model.scale.x;
+        const scaleFactor = (canvas.width / 2) / (512 * modelScale);
+        const posX = (layer.x || 0) * scaleFactor;
+        const posY = (layer.y || 0) * scaleFactor;
+        const btnSize = 12 * scaleFactor;
 
-      let width, height;
-      if (layer.type === "text") {
-        const baseFontSize = layer.fontSize || 24;
-        const adjustedFontSize = baseFontSize * scaleFactor;
-        ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
-        const textMetrics = ctx.measureText(layer.content || "Text");
-        width = textMetrics.width * scaleFactor;
-        height = adjustedFontSize * 1.2;
-      } else if (layer.type === "image") {
-        width = layer.imageWidth || 100;
-        height = layer.imageHeight || 50;
-      }
+        let width, height;
+        if (layer.type === "text") {
+            const baseFontSize = layer.fontSize || 24;
+            const adjustedFontSize = baseFontSize * scaleFactor;
+            ctx.font = `${adjustedFontSize}px Arial, sans-serif`;
+            const textMetrics = ctx.measureText(layer.content || "Text");
+            width = textMetrics.width * scaleFactor;
+            height = adjustedFontSize * 1.2;
+        } else if (layer.type === "image") {
+            width = (layer.imageWidth || 100) * scaleFactor;
+            height = (layer.imageHeight || 50) * scaleFactor;
+        }
 
-      ctx.translate(
-        posX + 35 * scaleFactor + width / 2,
-        posY + 86 * scaleFactor + height / 2
-      );
+        ctx.translate(
+            posX + 35 * scaleFactor + width / 2,
+            posY + 86 * scaleFactor + height / 2
+        );
 
-      ctx.scale(1, -1);
-      ctx.rotate((layer.rotation || 0) * Math.PI / 180);
+        ctx.scale(1, -1);
+        ctx.rotate((layer.rotation || 0) * Math.PI / 180);
 
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-width / 2, -height / 2, width, height);
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(-width / 2, -height / 2, width, height);
 
-      const halfWidth = width / 2;
-      const halfHeight = height / 2;
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
 
-      drawControlButton(ctx, -halfWidth, -halfHeight, btnSize, "🔄", "rotate", layer.id);
-      drawControlButton(ctx, halfWidth, -halfHeight, btnSize, "❌", "delete", layer.id);
-      drawControlButton(ctx, -halfWidth, halfHeight, btnSize, "↔️", "resize", layer.id);
-      drawControlButton(ctx, halfWidth, halfHeight, btnSize, "✋", "move", layer.id);
+        drawControlButton(ctx, -halfWidth, -halfHeight, btnSize, "🔄", "rotate", layer.id);
+        drawControlButton(ctx, halfWidth, -halfHeight, btnSize, "❌", "delete", layer.id);
+        drawControlButton(ctx, -halfWidth, halfHeight, btnSize, "↔️", "resize", layer.id);
+        drawControlButton(ctx, halfWidth, halfHeight, btnSize, "✋", "move", layer.id);
 
-      ctx.restore();
-    }
-
-    function drawControlButton(ctx, x, y, size, label, type, layerId) {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.beginPath();
-      ctx.arc(0, 0, size / 2, 0, 2 * Math.PI);
-      ctx.fillStyle = "white";
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = "black";
-      ctx.font = `${size}px Arial, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(label, 0, 0);
-
-      if (!window.controlButtons) {
-        window.controlButtons = [];
-      }
-      window.controlButtons.push({ x, y, size, type, layerId });
-
-      ctx.restore();
+        ctx.restore();
     }
 
     function isPointInsideCircle(px, py, cx, cy, radius) {
-      const dx = px - cx;
-      const dy = py - cy;
-      return (dx * dx + dy * dy) <= (radius * radius);
+        const dx = px - cx;
+        const dy = py - cy;
+        return (dx * dx + dy * dy) <= (radius * radius);
     }
 
     function handleControlButtonClick(event) {
-      event.preventDefault();
-      event.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
 
-      const canvas = getCanvasTexture()?.image;
-      if (!canvas) {
-        console.error("🚨 Canvas not found for click detection");
-        return;
-      }
-      const rect = renderer.domElement.getBoundingClientRect();
-
-      let pointerX, pointerY;
-      if (event.touches && event.touches.length > 0) {
-        pointerX = event.touches[0].clientX - rect.left;
-        pointerY = event.touches[0].clientY - rect.top;
-        console.log(`👇 Touch detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
-      } else {
-        pointerX = event.clientX - rect.left;
-        pointerY = event.clientY - rect.top;
-        console.log(`🖱️ Click detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
-      }
-
-      if (window.controlButtons && window.controlButtons.length > 0) {
-        for (let i = 0; i < window.controlButtons.length; i++) {
-          const btn = window.controlButtons[i];
-          if (isPointInsideCircle(pointerX, pointerY, btn.x, btn.y, btn.size / 2)) {
-            console.log(`✅ Hit control button: ${btn.type} for layer ${btn.layerId} at (${btn.x.toFixed(2)}, ${btn.y.toFixed(2)})`);
-            triggerControlAction(btn.layerId, btn.type);
-            break;
-          }
+        const canvas = getCanvasTexture()?.image;
+        if (!canvas) {
+            console.error("🚨 Canvas not found for click detection");
+            return;
         }
-      } else {
-        console.log("ℹ️ No control buttons to check");
-      }
+        const rect = renderer.domElement.getBoundingClientRect();
+
+        let pointerX, pointerY;
+        if (event.touches && event.touches.length > 0) {
+            pointerX = event.touches[0].clientX - rect.left;
+            pointerY = event.touches[0].clientY - rect.top;
+            console.log(`👇 Touch detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
+        } else {
+            pointerX = event.clientX - rect.left;
+            pointerY = event.clientY - rect.top;
+            console.log(`🖱️ Click detected at canvas coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
+        }
+
+        if (window.controlButtons && window.controlButtons.length > 0) {
+            for (let i = 0; i < window.controlButtons.length; i++) {
+                const btn = window.controlButtons[i];
+                if (isPointInsideCircle(pointerX, pointerY, btn.x, btn.y, btn.size / 2)) {
+                    console.log(`✅ Hit control button: ${btn.type} for layer ${btn.layerId} at (${btn.x.toFixed(2)}, ${btn.y.toFixed(2)})`);
+                    triggerControlAction(btn.layerId, btn.type);
+                    break;
+                }
+            }
+        } else {
+            console.log("ℹ️ No control buttons to check");
+        }
     }
 
     function triggerControlAction(layerId, controlType) {
-      console.log(`🎬 Triggering action: ${controlType} for layer ${layerId}`);
-      const actionData = { layerId, action: controlType };
+        console.log(`🎬 Triggering action: ${controlType} for layer ${layerId}`);
+        const actionData = {layerId, action: controlType};
 
-      if (controlType === "delete") {
-        console.log(`🗑️ Delete action initiated for layer ${layerId}`);
-        notifyFlutter(actionData);
-      } else if (controlType === "rotate") {
-        console.log(`🔄 Rotate action initiated for layer ${layerId}`);
-        notifyFlutter(actionData);
-      } else if (controlType === "resize") {
-        console.log(`📏 Resize action initiated for layer ${layerId}`);
-        notifyFlutter(actionData);
-      } else if (controlType === "move") {
-        console.log(`✋ Move action initiated for layer ${layerId}`);
-        notifyFlutter(actionData);
-      }
+        if (controlType === "delete") {
+            console.log(`🗑️ Delete action initiated for layer ${layerId}`);
+            notifyFlutter(actionData);
+        } else if (controlType === "rotate") {
+            console.log(`🔄 Rotate action initiated for layer ${layerId}`);
+            notifyFlutter(actionData);
+        } else if (controlType === "resize") {
+            console.log(`📏 Resize action initiated for layer ${layerId}`);
+            notifyFlutter(actionData);
+        } else if (controlType === "move") {
+            console.log(`✋ Move action initiated for layer ${layerId}`);
+            notifyFlutter(actionData);
+        }
     }
 
     function notifyFlutter(data) {
-      if (typeof ControlAction !== 'undefined' && ControlAction.postMessage) {
-        console.log(`📤 Sending to Flutter: ${JSON.stringify(data)}`);
-        ControlAction.postMessage(JSON.stringify(data));
-      } else {
-        console.warn("⚠️ ControlAction channel not defined, cannot notify Flutter");
-      }
+        if (typeof ControlAction !== 'undefined' && ControlAction.postMessage) {
+            console.log(`📤 Sending to Flutter: ${JSON.stringify(data)}`);
+            ControlAction.postMessage(JSON.stringify(data));
+        } else {
+            console.warn("⚠️ ControlAction channel not defined, cannot notify Flutter");
+        }
     }
 
     function setupCanvasClickListener() {
-      console.log("Setting up canvas click listener...");
-      const canvas = renderer.domElement;
-      if (!canvas) {
-        console.error("🚨 Renderer canvas not found for click setup");
-        return;
-      }
-
-      const handleClick = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const rect = canvas.getBoundingClientRect();
-        const pointerX = event.clientX - rect.left;
-        const pointerY = event.clientY - rect.top;
-        console.log(`🖱️ Canvas click at coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
-        handleControlButtonClick(event);
-      };
-
-      canvas.removeEventListener('click', handleClick);
-      canvas.addEventListener('click', handleClick, { capture: false });
-
-      document.body.addEventListener('click', (event) => {
-        const x = event.clientX;
-        const y = event.clientY;
-        console.log(`🌐 Body click detected at: ${x}x${y}`);
-        if (x < 280 || y < 60) {
-          console.log("Click in fake layout area - should reach Flutter");
+        console.log("Setting up canvas click listener...");
+        const canvas = renderer.domElement;
+        if (!canvas) {
+            console.error("🚨 Renderer canvas not found for click setup");
+            return;
         }
-      });
 
-      document.documentElement.addEventListener('click', (event) => {
-        console.log(`📜 Document click detected at: ${event.clientX}x${event.clientY}`);
-      });
+        const handleClick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const rect = canvas.getBoundingClientRect();
+            const pointerX = event.clientX - rect.left;
+            const pointerY = event.clientY - rect.top;
+            console.log(`🖱️ Canvas click at coords: (${pointerX.toFixed(2)}, ${pointerY.toFixed(2)})`);
+            handleControlButtonClick(event);
+        };
+
+        canvas.removeEventListener('click', handleClick);
+        canvas.addEventListener('click', handleClick, {capture: false});
+
+        document.body.addEventListener('click', (event) => {
+            const x = event.clientX;
+            const y = event.clientY;
+            console.log(`🌐 Body click detected at: ${x}x${y}`);
+            if (x < 280 || y < 60) {
+                console.log("Click in fake layout area - should reach Flutter");
+            }
+        });
+
+        document.documentElement.addEventListener('click', (event) => {
+            console.log(`📜 Document click detected at: ${event.clientX}x${event.clientY}`);
+        });
     }
 
     window.ModelLoaded = window.ModelLoaded || {};
@@ -521,62 +539,62 @@
     window.ModelSaved = window.ModelSaved || {};
 
     function onModelLoadStarted() {
-      try {
-        if (typeof ModelLoadStarted !== 'undefined' && ModelLoadStarted.postMessage) {
-          console.log('Model Load Started on Mobile');
-          ModelLoadStarted.postMessage("model_load_started");
-        } else if (typeof window.ModelLoadStarted !== 'undefined') {
-          console.log('Model Load Started on Web');
-          const event = new Event('ModelLoadStarted');
-          window.dispatchEvent(event);
-        } else {
-          console.error('ModelLoadStarted is not defined on any platform');
+        try {
+            if (typeof ModelLoadStarted !== 'undefined' && ModelLoadStarted.postMessage) {
+                console.log('Model Load Started on Mobile');
+                ModelLoadStarted.postMessage("model_load_started");
+            } else if (typeof window.ModelLoadStarted !== 'undefined') {
+                console.log('Model Load Started on Web');
+                const event = new Event('ModelLoadStarted');
+                window.dispatchEvent(event);
+            } else {
+                console.error('ModelLoadStarted is not defined on any platform');
+            }
+        } catch (error) {
+            console.error('Error in onModelLoadStarted:', error);
         }
-      } catch (error) {
-        console.error('Error in onModelLoadStarted:', error);
-      }
     }
 
     function onModelLoaded() {
-      try {
-        if (typeof ModelLoaded !== 'undefined' && ModelLoaded.postMessage) {
-          console.log('Model Loaded on Mobile');
-          ModelLoaded.postMessage("model_loaded");
-        } else if (typeof window.ModelLoaded !== 'undefined') {
-          console.log('Model Loaded on Web');
-          const event = new Event('ModelLoaded');
-          window.dispatchEvent(event);
-        } else {
-          console.error('ModelLoaded is not defined on any platform');
+        try {
+            if (typeof ModelLoaded !== 'undefined' && ModelLoaded.postMessage) {
+                console.log('Model Loaded on Mobile');
+                ModelLoaded.postMessage("model_loaded");
+            } else if (typeof window.ModelLoaded !== 'undefined') {
+                console.log('Model Loaded on Web');
+                const event = new Event('ModelLoaded');
+                window.dispatchEvent(event);
+            } else {
+                console.error('ModelLoaded is not defined on any platform');
+            }
+        } catch (error) {
+            console.error('Error in onModelLoaded:', error);
         }
-      } catch (error) {
-        console.error('Error in onModelLoaded:', error);
-      }
     }
 
     window.setBackgroundColorJS = function (color) {
-      if (!color) {
-        console.warn("⚠️ Invalid background color received:", color);
-      }
-      if (backgroundColor !== color) {
-        backgroundColor = color;
-        console.log("✅ Background Color Set to: -->" + color + "<--");
-      } else {
-        console.log("⚠️ Skipping redundant background update.");
-      }
+        if (!color) {
+            console.warn("⚠️ Invalid background color received:", color);
+        }
+        if (backgroundColor !== color) {
+            backgroundColor = color;
+            console.log("✅ Background Color Set to: -->" + color + "<--");
+        } else {
+            console.log("⚠️ Skipping redundant background update.");
+        }
     };
 
     document.addEventListener("DOMContentLoaded", () => {
-      console.log("⚡ DOMContentLoaded event fired!");
+        console.log("⚡ DOMContentLoaded event fired!");
     });
 
     window.addEventListener('load', () => {
-      console.log("Window fully loaded");
-      console.log("Checking THREE after full load:", typeof THREE);
-      if (typeof THREE === 'undefined') {
-        console.error("❌ THREE.js not defined after full load");
-      } else {
-        console.log("✅ THREE.js loaded successfully after full load");
-      }
+        console.log("Window fully loaded");
+        console.log("Checking THREE after full load:", typeof THREE);
+        if (typeof THREE === 'undefined') {
+            console.error("❌ THREE.js not defined after full load");
+        } else {
+            console.log("✅ THREE.js loaded successfully after full load");
+        }
     });
 </script>
